@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e14">
+<title>TradeVault V2</title>
+<style>
+:root{
+ --bg:#080b11;--panel:#10151f;--panel2:#151b27;--line:#242c3b;--text:#eef2f8;--muted:#8d98aa;
+ --accent:#7c6cff;--accent2:#4f9cff;--green:#32d583;--red:#ff5d73;--amber:#f5b942;
+ --shadow:0 18px 50px rgba(0,0,0,.28);--r:20px;
+}
+*{box-sizing:border-box}html,body{margin:0;background:radial-gradient(circle at 20% 0%,#15142a 0,#080b11 35%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,select,textarea{font:inherit}button{border:0;color:inherit;cursor:pointer}
+.app{min-height:100vh}.shell{display:flex;min-height:100vh}.side{width:250px;padding:22px 14px;border-right:1px solid var(--line);background:rgba(9,12,18,.82);backdrop-filter:blur(18px);position:fixed;inset:0 auto 0 0;z-index:20}
+.brand{display:flex;align-items:center;gap:11px;padding:8px 10px 25px}.logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:900}.brand b{font-size:18px}.brand small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.nav{display:grid;gap:7px}.nav button{background:transparent;text-align:left;padding:13px 14px;border-radius:13px;color:var(--muted);display:flex;gap:12px;align-items:center}.nav button.active,.nav button:hover{background:#171d29;color:#fff}.nav i{font-style:normal;width:21px;text-align:center}
+.side-foot{position:absolute;bottom:18px;left:14px;right:14px;padding:13px;color:var(--muted);font-size:11px;background:#10151e;border:1px solid var(--line);border-radius:14px}
+.main{margin-left:250px;width:calc(100% - 250px);padding:24px;max-width:1450px}.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:22px}.title h1{margin:0;font-size:27px}.title p{margin:5px 0 0;color:var(--muted);font-size:13px}.actions{display:flex;gap:9px}.btn{padding:11px 15px;border-radius:12px;background:#171e2a;border:1px solid var(--line);font-weight:700}.btn.primary{background:linear-gradient(135deg,var(--accent),#596dff);border:0}.btn.danger{color:#ff91a0}.iconbtn{width:42px;height:42px;padding:0;display:grid;place-items:center}
+.page{display:none}.page.active{display:block;animation:fade .18s ease}@keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.card{background:linear-gradient(145deg,rgba(20,26,37,.96),rgba(13,17,25,.96));border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}.stat small{color:var(--muted);font-size:12px}.stat strong{display:block;font-size:26px;margin-top:10px}.green{color:var(--green)!important}.red{color:var(--red)!important}.muted{color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;margin-top:14px}.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}.section-head h3{margin:0;font-size:15px}.chart{height:270px;position:relative}.chart svg{width:100%;height:100%}.empty{display:grid;place-items:center;min-height:190px;color:var(--muted);text-align:center}.empty b{color:#fff;display:block;margin-bottom:5px}
+.trade-list{display:grid;gap:10px}.trade{padding:14px;border:1px solid var(--line);background:#111722;border-radius:16px;display:grid;grid-template-columns:1.2fr 1fr .8fr auto;align-items:center;gap:10px}.trade:hover{border-color:#3a465b}.trade .sym{font-weight:800}.trade .meta{font-size:11px;color:var(--muted);margin-top:4px}.pill{font-size:10px;padding:5px 8px;border-radius:999px;background:#1b2331;color:#aab5c8}.pill.long{color:var(--green)}.pill.short{color:var(--red)}.trade-actions{display:flex;gap:5px}.trade-actions button{background:#1a202c;border:1px solid var(--line);border-radius:9px;padding:8px;font-size:12px}
+.toolbar{display:flex;gap:9px;margin-bottom:13px;flex-wrap:wrap}.input,.select,.textarea{width:100%;background:#0d121a;border:1px solid var(--line);border-radius:12px;color:#fff;padding:12px;outline:none}.input:focus,.select:focus,.textarea:focus{border-color:var(--accent)}.toolbar .input{max-width:300px}.toolbar .select{max-width:170px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}.table{width:100%;border-collapse:collapse;min-width:760px}.table th,.table td{padding:13px;border-bottom:1px solid #202837;text-align:left;font-size:12px}.table th{color:var(--muted);font-weight:600}.table tr:last-child td{border:0}
+.form{display:grid;gap:14px}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field label{display:block;color:var(--muted);font-size:11px;margin:0 0 7px}.textarea{min-height:100px;resize:vertical}.modal{position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(9px);z-index:50;display:none;align-items:flex-end;justify-content:center}.modal.open{display:flex}.modalbox{width:min(720px,100%);max-height:92vh;overflow:auto;background:#101620;border:1px solid var(--line);border-radius:24px 24px 0 0;padding:20px;animation:up .2s ease}@keyframes up{from{transform:translateY(50px);opacity:0}to{transform:none;opacity:1}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:17px}.modal-head h2{margin:0;font-size:19px}.x{background:#1b2230;width:36px;height:36px;border-radius:10px}.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.mini{padding:15px;border:1px solid var(--line);border-radius:15px;background:#111721}.mini span{color:var(--muted);font-size:11px}.mini b{display:block;font-size:20px;margin-top:7px}.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.setup-card{display:flex;justify-content:space-between;gap:15px;align-items:center}.setup-card h4{margin:0 0 4px}.progress{height:7px;background:#202735;border-radius:99px;overflow:hidden;margin-top:9px}.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px}
+.bottom{display:none}.fab{display:none}
+.toast{position:fixed;right:20px;bottom:20px;background:#151c28;border:1px solid var(--line);box-shadow:var(--shadow);padding:13px 16px;border-radius:13px;z-index:100;transform:translateY(20px);opacity:0;pointer-events:none;transition:.2s}.toast.show{transform:none;opacity:1}
+
+/* Custom app dropdowns — avoids Android native select sheets */
+.select{appearance:none;-webkit-appearance:none;background:#0d121a}
+.app-select{position:relative;width:100%}
+.app-select-trigger{width:100%;min-height:46px;padding:12px 42px 12px 13px;border:1px solid var(--line);border-radius:12px;background:#0d121a;color:#fff;text-align:left;position:relative}
+.app-select-trigger:after{content:'⌄';position:absolute;right:14px;top:50%;transform:translateY(-55%);color:#9aa5b7;font-size:18px}
+.app-select.open .app-select-trigger{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,108,255,.12)}
+.app-select-menu{display:none;position:absolute;z-index:90;left:0;right:0;top:calc(100% + 6px);padding:5px;background:#151c28;border:1px solid #303a4c;border-radius:14px;box-shadow:0 18px 45px #0009;max-height:230px;overflow:auto}
+.app-select.open .app-select-menu{display:block;animation:drop .12s ease}
+@keyframes drop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.app-option{width:100%;padding:12px 13px;background:transparent;border-radius:10px;text-align:left;color:#dfe5ee;display:flex;justify-content:space-between;align-items:center}
+.app-option:hover,.app-option.selected{background:#20293a;color:#fff}
+.app-option.selected:after{content:'✓';color:#9c91ff;font-weight:800}
+.hidden-select{display:none!important}
+@media(max-width:900px){
+ .modal{align-items:center;padding:10px}
+ .modalbox{width:100%;max-height:calc(100vh - 20px);border-radius:24px;padding:18px;box-shadow:0 25px 80px #000b}
+ .modalbox .form{padding-bottom:4px}
+ .modalbox .form-actions{position:sticky;bottom:-18px;padding:13px 0 2px;background:linear-gradient(transparent,#101620 25%);z-index:2}
+ .app-select-menu{max-height:210px}
+}
+@media(max-width:900px){.side{display:none}.main{margin:0;width:100%;padding:16px 14px 92px}.cards{grid-template-columns:repeat(2,1fr)}.grid2,.review-grid{grid-template-columns:1fr}.top{margin-bottom:17px}.title h1{font-size:22px}.actions .hide-m{display:none}.bottom{display:flex;position:fixed;bottom:0;left:0;right:0;height:67px;background:rgba(12,16,23,.94);backdrop-filter:blur(20px);border-top:1px solid var(--line);z-index:30;padding:6px 5px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}.bottom button{background:transparent;color:var(--muted);font-size:10px;display:grid;place-items:center;gap:3px;min-width:58px}.bottom button.active{color:#fff}.bottom i{font-style:normal;font-size:19px}.fab{display:grid;place-items:center;position:fixed;right:18px;bottom:82px;width:55px;height:55px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));font-size:26px;box-shadow:0 12px 30px #0008;z-index:25}.trade{grid-template-columns:1fr auto}.trade .trade-mid{display:none}.trade-actions{grid-column:1/-1}.chart{height:220px}.formgrid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:901px){.modal{align-items:center}.modalbox{border-radius:24px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="shell">
+<aside class="side">
+ <div class="brand"><div class="logo">TV</div><div><b>TradeVault</b><small>Personal trading OS</small></div></div>
+ <nav class="nav" id="sideNav">
+  <button data-page="home" class="active"><i>⌂</i>Home</button>
+  <button data-page="trades"><i>↗</i>Trades</button>
+  <button data-page="analytics"><i>◔</i>Analytics</button>
+  <button data-page="playbook"><i>▤</i>Playbook</button>
+  <button data-page="reviews"><i>✓</i>Reviews</button>
+  <button data-page="settings"><i>⚙</i>Settings</button>
+ </nav>
+ <div class="side-foot">Everything stays on this device.<br>Export a backup regularly.</div>
+</aside>
+
+<main class="main">
+<header class="top">
+ <div class="title"><h1 id="pageTitle">Dashboard</h1><p id="pageSub">Your trading process at a glance.</p></div>
+ <div class="actions"><button class="btn hide-m" onclick="openTrade()">＋ Add Trade</button><button class="btn iconbtn" onclick="exportData()">⇩</button></div>
+</header>
+
+<section class="page active" id="page-home">
+ <div class="cards">
+  <div class="card stat"><small>Net P&L</small><strong id="sPnl">₹0</strong></div>
+  <div class="card stat"><small>Total R</small><strong id="sR">0.00R</strong></div>
+  <div class="card stat"><small>Win Rate</small><strong id="sWin">0%</strong></div>
+  <div class="card stat"><small>Trades</small><strong id="sTrades">0</strong></div>
+ </div>
+ <div class="grid2">
+  <div class="card"><div class="section-head"><h3>Equity Curve</h3><span class="muted" id="equityRange">No trades</span></div><div class="chart" id="equityChart"></div></div>
+  <div class="card"><div class="section-head"><h3>Quick Stats</h3></div><div class="kpis">
+   <div class="mini"><span>Profit Factor</span><b id="pf">—</b></div><div class="mini"><span>Expectancy</span><b id="exp">—</b></div>
+   <div class="mini"><span>Max DD</span><b id="dd">0R</b></div><div class="mini"><span>Best Trade</span><b id="best">—</b></div>
+   <div class="mini"><span>Avg Win</span><b id="avgw">—</b></div><div class="mini"><span>Avg Loss</span><b id="avgl">—</b></div>
+  </div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><div class="section-head"><h3>Recent Trades</h3><button class="btn" onclick="go('trades')">View all</button></div><div id="recent"></div></div>
+</section>
+
+<section class="page" id="page-trades">
+ <div class="toolbar"><input class="input" id="search" placeholder="Search symbol, setup, notes..." oninput="renderTrades()">
+ <div class="app-select" data-select="filterDir"><input type="hidden" id="filterDir" value=""><button type="button" class="app-select-trigger">All directions</button><div class="app-select-menu"><button type="button" class="app-option selected" data-value="">All directions</button><button type="button" class="app-option" data-value="Long">Long</button><button type="button" class="app-option" data-value="Short">Short</button></div></div>
+ <div class="app-select" data-select="filterResult"><input type="hidden" id="filterResult" value=""><button type="button" class="app-select-trigger">All results</button><div class="app-select-menu"><button type="button" class="app-option selected" data-value="">All results</button><button type="button" class="app-option" data-value="win">Wins</button><button type="button" class="app-option" data-value="loss">Losses</button><button type="button" class="app-option" data-value="be">Breakeven</button></div></div>
+ <button class="btn primary" onclick="openTrade()">＋ Add Trade</button></div>
+ <div class="card"><div id="tradesList"></div></div>
+</section>
+
+<section class="page" id="page-analytics">
+ <div class="cards"><div class="card stat"><small>Profit Factor</small><strong id="aPF">—</strong></div><div class="card stat"><small>Expectancy / trade</small><strong id="aExp">—</strong></div><div class="card stat"><small>Max Drawdown</small><strong id="aDD">0R</strong></div><div class="card stat"><small>Rule Adherence</small><strong id="aRule">0%</strong></div></div>
+ <div class="grid2">
+  <div class="card"><div class="section-head"><h3>R-Multiple Curve</h3></div><div class="chart" id="rChart"></div></div>
+  <div class="card"><div class="section-head"><h3>Direction</h3></div><div id="directionStats"></div></div>
+ </div>
+ <div class="card" style="margin-top:14px"><div class="section-head"><h3>Setup Performance</h3></div><div id="setupStats"></div></div>
+</section>
+
+<section class="page" id="page-playbook">
+ <div class="section-head"><div><h3 style="margin:0">Your Playbook</h3><div class="muted" style="font-size:12px;margin-top:4px">Keep setups explicit and consistent.</div></div><button class="btn primary" onclick="openSetup()">＋ Add Setup</button></div>
+ <div id="playbookList" class="trade-list"></div>
+</section>
+
+<section class="page" id="page-reviews">
+ <div class="section-head"><div><h3 style="margin:0">Weekly Reviews</h3><div class="muted" style="font-size:12px;margin-top:4px">Review process, not just money.</div></div><button class="btn primary" onclick="openReview()">＋ Add Review</button></div>
+ <div id="reviewsList" class="trade-list"></div>
+</section>
+
+<section class="page" id="page-settings">
+ <div class="card"><div class="section-head"><h3>Settings & Backup</h3></div><div class="formgrid">
+  <div class="field"><label>Trader name</label><input class="input" id="traderName" placeholder="Your name"></div>
+  <div class="field"><label>Default market</label><input class="input" id="defaultMarket" placeholder="NIFTY / BANKNIFTY / Stocks"></div>
+ </div><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:15px"><button class="btn primary" onclick="saveSettings()">Save Settings</button><button class="btn" onclick="exportData()">Export Backup</button><button class="btn" onclick="document.getElementById('importFile').click()">Import Backup</button><button class="btn danger" onclick="clearAll()">Clear All Data</button></div><input type="file" id="importFile" accept=".json" hidden onchange="importData(event)"></div>
+ <div class="card" style="margin-top:14px"><h3 style="margin-top:0">Data</h3><p class="muted" style="font-size:12px;line-height:1.6">Trades, setups and reviews are stored locally in your browser. Nothing is sent to a server. Export JSON before clearing browser data or changing devices.</p></div>
+</section>
+</main>
+</div>
+
+<nav class="bottom" id="bottomNav"><button data-page="home" class="active"><i>⌂</i>Home</button><button data-page="trades"><i>↗</i>Trades</button><button data-page="analytics"><i>◔</i>Analytics</button><button data-page="playbook"><i>▤</i>Playbook</button><button data-page="settings"><i>⚙</i>More</button></nav>
+<button class="fab" onclick="openTrade()">＋</button>
+</div>
+
+<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='tradevault_v2';
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||{trades:[],setups:[],reviews:[],settings:{name:'',market:''}};
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+const money=n=>new Intl.NumberFormat('en-IN',{maximumFractionDigits:2}).format(Number(n)||0);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function toast(msg){let t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.tt);window.tt=setTimeout(()=>t.classList.remove('show'),2200)}
+function go(page){
+ document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id==='page-'+page));
+ document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));
+ const meta={home:['Dashboard','Your trading process at a glance.'],trades:['Trades','Record, review and manage every trade.'],analytics:['Analytics','See what your data is actually saying.'],playbook:['Playbook','Your personal setup library.'],reviews:['Reviews','Weekly process reviews.'],settings:['Settings','Backup and device preferences.']};
+ document.getElementById('pageTitle').textContent=meta[page][0];document.getElementById('pageSub').textContent=meta[page][1];
+ window.scrollTo({top:0,behavior:'smooth'});renderAll();
+}
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+
+function openModal(html){document.getElementById('modalbox').innerHTML=html;document.getElementById('modal').classList.add('open');initSelects(document.getElementById('modalbox'))}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+
+
+function appSelect(id,value,options){
+ const label=(options.find(o=>String(o[0])===String(value))||options[0]||['','Select'])[1];
+ return `<div class="app-select" data-select="${id}">
+   <input type="hidden" id="${id}" value="${esc(value)}">
+   <button type="button" class="app-select-trigger">${esc(label)}</button>
+   <div class="app-select-menu">${options.map(o=>`<button type="button" class="app-option ${String(o[0])===String(value)?'selected':''}" data-value="${esc(o[0])}">${esc(o[1])}</button>`).join('')}</div>
+ </div>`;
+}
+function initSelects(root=document){
+ root.querySelectorAll('.app-select').forEach(box=>{
+   const trigger=box.querySelector('.app-select-trigger'), input=box.querySelector('input[type=hidden]');
+   if(!trigger||!input||box.dataset.bound)return;
+   box.dataset.bound='1';
+   trigger.addEventListener('click',e=>{
+     e.stopPropagation();
+     document.querySelectorAll('.app-select.open').forEach(x=>{if(x!==box)x.classList.remove('open')});
+     box.classList.toggle('open');
+   });
+   box.querySelectorAll('.app-option').forEach(opt=>opt.addEventListener('click',e=>{
+     e.stopPropagation();
+     input.value=opt.dataset.value;
+     trigger.textContent=opt.textContent;
+     box.querySelectorAll('.app-option').forEach(x=>x.classList.remove('selected'));
+     opt.classList.add('selected');
+     box.classList.remove('open');
+     if(input.id==='filterDir'||input.id==='filterResult')renderTrades();
+   }));
+ });
+}
+document.addEventListener('click',()=>document.querySelectorAll('.app-select.open').forEach(x=>x.classList.remove('open')));
+function openTrade(id=''){
+ const t=db.trades.find(x=>x.id===id)||{id:'',date:new Date().toISOString().slice(0,10),symbol:'',direction:'Long',setup:'',entry:'',exit:'',sl:'',target:'',qty:'',pnl:'',r:'',rule:true,emotion:'',mistake:'',notes:''};
+ openModal(`<div class="modal-head"><h2>${id?'Edit Trade':'New Trade'}</h2><button class="x" onclick="closeModal()">×</button></div>
+ <form class="form" onsubmit="submitTrade(event,'${id}')">
+ <div class="formgrid"><div class="field"><label>Date</label><input class="input" type="date" id="t_date" value="${esc(t.date)}" required></div><div class="field"><label>Symbol</label><input class="input" id="t_symbol" value="${esc(t.symbol)}" placeholder="NIFTY / RELIANCE" required></div>
+ <div class="field"><label>Direction</label>${appSelect('t_direction',t.direction,[['Long','Long'],['Short','Short']])}</div><div class="field"><label>Setup</label><input class="input" id="t_setup" value="${esc(t.setup)}" placeholder="Your setup name"></div>
+ <div class="field"><label>Entry</label><input class="input" type="number" step="any" id="t_entry" value="${esc(t.entry)}"></div><div class="field"><label>Exit</label><input class="input" type="number" step="any" id="t_exit" value="${esc(t.exit)}"></div>
+ <div class="field"><label>Stop Loss</label><input class="input" type="number" step="any" id="t_sl" value="${esc(t.sl)}"></div><div class="field"><label>Target</label><input class="input" type="number" step="any" id="t_target" value="${esc(t.target)}"></div>
+ <div class="field"><label>Quantity</label><input class="input" type="number" step="any" id="t_qty" value="${esc(t.qty)}"></div><div class="field"><label>Net P&L ₹</label><input class="input" type="number" step="any" id="t_pnl" value="${esc(t.pnl)}" placeholder="After charges"></div>
+ <div class="field"><label>Result R</label><input class="input" type="number" step="any" id="t_r" value="${esc(t.r)}" placeholder="e.g. 1.5 or -1"></div><div class="field"><label>Emotion before trade</label><input class="input" id="t_emotion" value="${esc(t.emotion)}" placeholder="Calm / FOMO / revenge..."></div></div>
+ <div class="field"><label>Rule adherence</label>${appSelect('t_rule',String(!!t.rule),[['true','Followed rules'],['false','Rule violation']])}</div>
+ <div class="field"><label>Mistake / violation</label><input class="input" id="t_mistake" value="${esc(t.mistake)}" placeholder="Optional"></div>
+ <div class="field"><label>Notes / reason for entry & exit</label><textarea class="textarea" id="t_notes" placeholder="What happened?">${esc(t.notes)}</textarea></div>
+ <div class="form-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button class="btn primary">${id?'Save Changes':'Save Trade'}</button></div></form>`)
+}
+function submitTrade(e,id){e.preventDefault();const old=db.trades.find(x=>x.id===id);const t={id:id||crypto.randomUUID(),date:t_date.value,symbol:t_symbol.value.trim().toUpperCase(),direction:t_direction.value,setup:t_setup.value.trim()||'Unspecified',entry:+t_entry.value||0,exit:+t_exit.value||0,sl:+t_sl.value||0,target:+t_target.value||0,qty:+t_qty.value||0,pnl:+t_pnl.value||0,r:+t_r.value||0,rule:t_rule.value==='true',emotion:t_emotion.value.trim(),mistake:t_mistake.value.trim(),notes:t_notes.value.trim(),created:old?.created||Date.now()};if(old)Object.assign(old,t);else db.trades.unshift(t);save();closeModal();toast(old?'Trade updated':'Trade added')}
+
+function deleteTrade(id){if(!confirm('Delete this trade permanently?'))return;db.trades=db.trades.filter(x=>x.id!==id);save();toast('Trade deleted')}
+function renderTrades(){
+ const q=(document.getElementById('search')?.value||'').toLowerCase(),d=document.getElementById('filterDir')?.value||'',r=document.getElementById('filterResult')?.value||'';
+ let a=db.trades.filter(t=>(!q||[t.symbol,t.setup,t.notes,t.mistake].join(' ').toLowerCase().includes(q))&&(!d||t.direction===d)&&(!r||(r==='win'?t.r>0:r==='loss'?t.r<0:t.r===0)));
+ const el=document.getElementById('tradesList');if(!a.length){el.innerHTML=`<div class="empty"><div><b>No trades found</b><span>Add your first trade to start building real data.</span></div></div>`;return}
+ el.innerHTML=`<div class="trade-list">${a.map(t=>tradeCard(t)).join('')}</div>`;
+}
+function tradeCard(t){return `<div class="trade"><div><div class="sym">${esc(t.symbol)} <span class="pill ${t.direction.toLowerCase()}">${t.direction}</span></div><div class="meta">${esc(t.date)} · ${esc(t.setup)}</div></div><div class="trade-mid"><div>${t.pnl>=0?'+':''}₹${money(t.pnl)}</div><div class="meta">${t.r>=0?'+':''}${Number(t.r).toFixed(2)}R · ${t.rule?'Rules ✓':'Violation'}</div></div><div class="${t.r>0?'green':t.r<0?'red':''}" style="font-weight:800">${t.r>0?'+':''}${Number(t.r).toFixed(2)}R</div><div class="trade-actions"><button onclick="openTrade('${t.id}')">Edit</button><button onclick="deleteTrade('${t.id}')">Delete</button></div></div>`}
+
+function stats(){
+ const a=db.trades, wins=a.filter(t=>t.r>0),loss=a.filter(t=>t.r<0),sum=a.reduce((s,t)=>s+t.r,0),pnl=a.reduce((s,t)=>s+t.pnl,0);
+ let peak=0,eq=0,dd=0; a.slice().reverse().forEach(t=>{eq+=t.r;peak=Math.max(peak,eq);dd=Math.min(dd,eq-peak)});
+ const pf=loss.length?wins.reduce((s,t)=>s+t.r,0)/Math.abs(loss.reduce((s,t)=>s+t.r,0)):wins.length?'∞':0;
+ return {a,wins,loss,sum,pnl,wr:a.length?wins.length/a.length*100:0,pf,exp:a.length?sum/a.length:0,dd,best:a.length?Math.max(...a.map(t=>t.r)):0,avgw:wins.length?wins.reduce((s,t)=>s+t.r,0)/wins.length:0,avgl:loss.length?loss.reduce((s,t)=>s+t.r,0)/loss.length:0,rule:a.length?a.filter(t=>t.rule).length/a.length*100:0};
+}
+function curveSVG(vals){
+ if(!vals.length)return `<div class="empty"><div><b>No curve yet</b><span>Your equity curve appears after trades are added.</span></div></div>`;
+ let min=Math.min(0,...vals),max=Math.max(0,...vals),range=max-min||1,w=760,h=250,p=20;
+ let pts=vals.map((v,i)=>`${p+i*((w-p*2)/Math.max(1,vals.length-1))},${h-p-((v-min)/range)*(h-p*2)}`).join(' ');
+ return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#7c6cff"/><stop offset="1" stop-color="#4f9cff"/></linearGradient></defs><polyline points="${pts}" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><line x1="20" y1="${h-p-(0-min)/range*(h-p*2)}" x2="${w-20}" y2="${h-p-(0-min)/range*(h-p*2)}" stroke="#293244" stroke-dasharray="5 7"/></svg>`;
+}
+function renderHome(){
+ const s=stats();sPnl.textContent=(s.pnl>=0?'+':'-')+'₹'+money(Math.abs(s.pnl));sPnl.className=' '+(s.pnl>=0?'green':'red');sR.textContent=(s.sum>=0?'+':'')+s.sum.toFixed(2)+'R';sR.className=s.sum>=0?'green':'red';sWin.textContent=s.wr.toFixed(1)+'%';sTrades.textContent=s.a.length;
+ pf.textContent=s.pf===0?'—':s.pf==='∞'?'∞':s.pf.toFixed(2);exp.textContent=s.a.length?(s.exp>=0?'+':'')+s.exp.toFixed(2)+'R':'—';dd.textContent=s.dd.toFixed(2)+'R';best.textContent=s.a.length?((s.best>=0?'+':'')+s.best.toFixed(2)+'R'):'—';avgw.textContent=s.wins.length?'+'+s.avgw.toFixed(2)+'R':'—';avgl.textContent=s.loss.length?s.avgl.toFixed(2)+'R':'—';
+ let eq=0,vals=[];s.a.slice().reverse().forEach(t=>{eq+=t.r;vals.push(eq)});equityChart.innerHTML=curveSVG(vals);equityRange.textContent=s.a.length?`${s.a.length} trades`:'No trades';
+ recent.innerHTML=s.a.length?`<div class="trade-list">${s.a.slice(0,5).map(tradeCard).join('')}</div>`:`<div class="empty"><div><b>Your journal is empty</b><span>Start with one completed trade.</span></div></div>`;
+}
+function renderAnalytics(){
+ const s=stats();aPF.textContent=s.pf===0?'—':s.pf==='∞'?'∞':s.pf.toFixed(2);aExp.textContent=s.a.length?(s.exp>=0?'+':'')+s.exp.toFixed(2)+'R':'—';aDD.textContent=s.dd.toFixed(2)+'R';aRule.textContent=s.rule.toFixed(0)+'%';
+ let eq=0,vals=[];s.a.slice().reverse().forEach(t=>{eq+=t.r;vals.push(eq)});rChart.innerHTML=curveSVG(vals);
+ let dirs=['Long','Short'];directionStats.innerHTML=dirs.map(d=>{let a=s.a.filter(t=>t.direction===d),w=a.filter(t=>t.r>0);return `<div class="setup-card" style="padding:12px 0;border-bottom:1px solid var(--line)"><div><b>${d}</b><div class="muted" style="font-size:11px">${a.length} trades · ${a.length?(w.length/a.length*100).toFixed(0):0}% win</div></div><strong class="${a.reduce((x,t)=>x+t.r,0)>=0?'green':'red'}">${a.reduce((x,t)=>x+t.r,0).toFixed(2)}R</strong></div>`}).join('');
+ let names=[...new Set(s.a.map(t=>t.setup||'Unspecified'))];setupStats.innerHTML=names.length?names.map(n=>{let a=s.a.filter(t=>(t.setup||'Unspecified')===n),w=a.filter(t=>t.r>0),rr=a.reduce((x,t)=>x+t.r,0);return `<div class="setup-card" style="padding:14px 0;border-bottom:1px solid var(--line)"><div style="flex:1"><h4>${esc(n)}</h4><div class="muted" style="font-size:11px">${a.length} trades · ${(w.length/a.length*100).toFixed(0)}% win</div><div class="progress"><i style="width:${Math.min(100,w.length/a.length*100)}%"></i></div></div><strong class="${rr>=0?'green':'red'}">${rr>=0?'+':''}${rr.toFixed(2)}R</strong></div>`}).join(''):`<div class="empty">No setup data yet.</div>`;
+}
+function openSetup(id=''){let s=db.setups.find(x=>x.id===id)||{id:'',name:'',market:'',timeframe:'',session:'',entry:'',invalid:'',exit:'',avoid:'',notes:''};openModal(`<div class="modal-head"><h2>${id?'Edit Setup':'New Playbook Setup'}</h2><button class="x" onclick="closeModal()">×</button></div><form class="form" onsubmit="submitSetup(event,'${id}')"><div class="formgrid"><div class="field"><label>Setup name</label><input class="input" id="p_name" value="${esc(s.name)}" required></div><div class="field"><label>Market</label><input class="input" id="p_market" value="${esc(s.market)}"></div><div class="field"><label>Timeframe</label><input class="input" id="p_tf" value="${esc(s.timeframe)}"></div><div class="field"><label>Session</label><input class="input" id="p_session" value="${esc(s.session)}"></div></div><div class="field"><label>Entry rules</label><textarea class="textarea" id="p_entry">${esc(s.entry)}</textarea></div><div class="field"><label>Invalidation / SL logic</label><textarea class="textarea" id="p_invalid">${esc(s.invalid)}</textarea></div><div class="field"><label>Exit / management</label><textarea class="textarea" id="p_exit">${esc(s.exit)}</textarea></div><div class="field"><label>No-trade conditions</label><textarea class="textarea" id="p_avoid">${esc(s.avoid)}</textarea></div><div class="field"><label>Notes</label><textarea class="textarea" id="p_notes">${esc(s.notes)}</textarea></div><div class="form-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button class="btn primary">Save Setup</button></div></form>`)}
+function submitSetup(e,id){e.preventDefault();let old=db.setups.find(x=>x.id===id),s={id:id||crypto.randomUUID(),name:p_name.value.trim(),market:p_market.value.trim(),timeframe:p_tf.value.trim(),session:p_session.value.trim(),entry:p_entry.value.trim(),invalid:p_invalid.value.trim(),exit:p_exit.value.trim(),avoid:p_avoid.value.trim(),notes:p_notes.value.trim()};old?Object.assign(old,s):db.setups.unshift(s);save();closeModal();toast('Playbook saved')}
+function deleteSetup(id){if(confirm('Delete this setup?')){db.setups=db.setups.filter(x=>x.id!==id);save();toast('Setup deleted')}}
+function renderPlaybook(){playbookList.innerHTML=db.setups.length?db.setups.map(s=>`<div class="card"><div class="setup-card"><div><h4 style="margin:0">${esc(s.name)}</h4><div class="muted" style="font-size:11px">${esc([s.market,s.timeframe,s.session].filter(Boolean).join(' · '))}</div></div><div class="trade-actions"><button onclick="openSetup('${s.id}')">Edit</button><button onclick="deleteSetup('${s.id}')">Delete</button></div></div><div style="margin-top:14px;font-size:12px;line-height:1.65"><b>Entry:</b> ${esc(s.entry||'—')}<br><b>Invalidation:</b> ${esc(s.invalid||'—')}<br><b>Exit:</b> ${esc(s.exit||'—')}<br><b>Avoid:</b> ${esc(s.avoid||'—')}</div></div>`).join(''):`<div class="card empty"><div><b>No setups yet</b><span>Create your first personal setup.</span></div></div>`}
+function openReview(id=''){let r=db.reviews.find(x=>x.id===id)||{id:'',week:'',pnl:'',rr:'',worked:'',failed:'',mistake:'',change:''};openModal(`<div class="modal-head"><h2>${id?'Edit Review':'Weekly Review'}</h2><button class="x" onclick="closeModal()">×</button></div><form class="form" onsubmit="submitReview(event,'${id}')"><div class="formgrid"><div class="field"><label>Week ending</label><input class="input" type="date" id="r_week" value="${esc(r.week)}" required></div><div class="field"><label>Week P&L ₹</label><input class="input" type="number" step="any" id="r_pnl" value="${esc(r.pnl)}"></div><div class="field"><label>Week R</label><input class="input" type="number" step="any" id="r_rr" value="${esc(r.rr)}"></div></div><div class="field"><label>What worked?</label><textarea class="textarea" id="r_worked">${esc(r.worked)}</textarea></div><div class="field"><label>What failed?</label><textarea class="textarea" id="r_failed">${esc(r.failed)}</textarea></div><div class="field"><label>Most common mistake</label><textarea class="textarea" id="r_mistake">${esc(r.mistake)}</textarea></div><div class="field"><label>Next process change</label><textarea class="textarea" id="r_change">${esc(r.change)}</textarea></div><div class="form-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button class="btn primary">Save Review</button></div></form>`)}
+function submitReview(e,id){e.preventDefault();let old=db.reviews.find(x=>x.id===id),r={id:id||crypto.randomUUID(),week:r_week.value,pnl:+r_pnl.value||0,rr:+r_rr.value||0,worked:r_worked.value.trim(),failed:r_failed.value.trim(),mistake:r_mistake.value.trim(),change:r_change.value.trim()};old?Object.assign(old,r):db.reviews.unshift(r);save();closeModal();toast('Review saved')}
+function deleteReview(id){if(confirm('Delete review?')){db.reviews=db.reviews.filter(x=>x.id!==id);save();toast('Review deleted')}}
+function renderReviews(){reviewsList.innerHTML=db.reviews.length?db.reviews.map(r=>`<div class="card"><div class="setup-card"><div><b>Week ending ${esc(r.week)}</b><div class="muted" style="font-size:11px;margin-top:4px">${r.rr>=0?'+':''}${r.rr.toFixed(2)}R · ${r.pnl>=0?'+':''}₹${money(r.pnl)}</div></div><div class="trade-actions"><button onclick="openReview('${r.id}')">Edit</button><button onclick="deleteReview('${r.id}')">Delete</button></div></div><div style="margin-top:14px;font-size:12px;line-height:1.7"><b>Worked:</b> ${esc(r.worked||'—')}<br><b>Failed:</b> ${esc(r.failed||'—')}<br><b>Mistake:</b> ${esc(r.mistake||'—')}<br><b>Next change:</b> ${esc(r.change||'—')}</div></div>`).join(''):`<div class="card empty"><div><b>No weekly reviews</b><span>Review your process once you have enough data.</span></div></div>`}
+function saveSettings(){db.settings.name=traderName.value.trim();db.settings.market=defaultMarket.value.trim();save();toast('Settings saved')}
+function exportData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='tradevault-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);toast('Backup exported')}
+function importData(e){let f=e.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let x=JSON.parse(rd.result);if(!x.trades||!x.setups||!x.reviews)throw Error();db=x;save();toast('Backup imported')}catch{toast('Invalid backup file')}};rd.readAsText(f);e.target.value=''}
+function clearAll(){if(confirm('This will delete all trades, setups and reviews. Export first if needed.')){db={trades:[],setups:[],reviews:[],settings:{name:'',market:''}};save();toast('All data cleared')}}
+function renderAll(){initSelects(document);renderHome();renderTrades();renderAnalytics();renderPlaybook();renderReviews();if(document.getElementById('traderName')){traderName.value=db.settings.name||'';defaultMarket.value=db.settings.market||''}}
+renderAll();
+</script>
+</body>
+</html>
