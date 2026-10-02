@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0e14">
-<title>TradeVault V2</title>
+
+<title>TradeVault</title>
 <style>
 :root{
  --bg:#080b11;--panel:#10151f;--panel2:#151b27;--line:#242c3b;--text:#eef2f8;--muted:#8d98aa;
@@ -53,6 +53,11 @@ button,input,select,textarea{font:inherit}button{border:0;color:inherit;cursor:p
 @media(max-width:900px){.side{display:none}.main{margin:0;width:100%;padding:16px 14px 92px}.cards{grid-template-columns:repeat(2,1fr)}.grid2,.review-grid{grid-template-columns:1fr}.top{margin-bottom:17px}.title h1{font-size:22px}.actions .hide-m{display:none}.bottom{display:flex;position:fixed;bottom:0;left:0;right:0;height:67px;background:rgba(12,16,23,.94);backdrop-filter:blur(20px);border-top:1px solid var(--line);z-index:30;padding:6px 5px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}.bottom button{background:transparent;color:var(--muted);font-size:10px;display:grid;place-items:center;gap:3px;min-width:58px}.bottom button.active{color:#fff}.bottom i{font-style:normal;font-size:19px}.fab{display:grid;place-items:center;position:fixed;right:18px;bottom:82px;width:55px;height:55px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));font-size:26px;box-shadow:0 12px 30px #0008;z-index:25}.trade{grid-template-columns:1fr auto}.trade .trade-mid{display:none}.trade-actions{grid-column:1/-1}.chart{height:220px}.formgrid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:901px){.modal{align-items:center}.modalbox{border-radius:24px}}
 </style>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0b0e14">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <div class="app">
@@ -254,5 +259,21 @@ function clearAll(){if(confirm('This will delete all trades, setups and reviews.
 function renderAll(){initSelects(document);renderHome();renderTrades();renderAnalytics();renderPlaybook();renderReviews();if(document.getElementById('traderName')){traderName.value=db.settings.name||'';defaultMarket.value=db.settings.market||''}}
 renderAll();
 </script>
+
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+        navigator.serviceWorker
+            .register("./service-worker.js")
+            .then(function () {
+                console.log("TradeVault Service Worker Registered");
+            })
+            .catch(function (error) {
+                console.error("TradeVault Service Worker Error:", error);
+            });
+    });
+}
+</script>
+
 </body>
 </html>
