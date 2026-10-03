@@ -1,4 +1,4 @@
-const CACHE_NAME = "tradevault-v1";
+const CACHE_NAME = "tradevault-v2";
 
 const APP_FILES = [
   "./",
