@@ -1,112 +1,94 @@
-import { db, saveDB } from "./storage.js";
-import { toast } from "./ui.js";
+import {db,saveDB} from "./storage.js";
+import {toast} from "./ui.js";
 
-/* =========================================================
+const THEME_KEY="tradevault_theme";
+
+/* =========================
    THEME SYSTEM
-   ========================================================= */
+========================= */
 
-const THEME_KEY = "tradevault_theme";
+export function applyTheme(theme){
+  const light = theme === "light";
 
-/* Apply selected theme */
-export function applyTheme(theme) {
-  const isLight = theme === "light";
+  document.body.classList.toggle("light-theme", light);
+  document.documentElement.classList.toggle("theme-light-preload", light);
+  document.documentElement.style.colorScheme = light ? "light" : "dark";
 
-  document.body.classList.toggle("light-theme", isLight);
-
-  /* Browser native controls */
-  document.documentElement.style.colorScheme =
-    isLight ? "light" : "dark";
-
-  /* Theme button */
   const icon = document.getElementById("themeIcon");
   const text = document.getElementById("themeText");
-  const button = document.getElementById("themeToggle");
+  const btn = document.getElementById("themeToggle");
 
-  if (icon) {
-    icon.textContent = isLight ? "☾" : "☀";
+  if(icon){
+    icon.textContent = light ? "☾" : "☀";
   }
 
-  if (text) {
-    text.textContent = isLight ? "Dark" : "Light";
+  if(text){
+    text.textContent = light ? "Dark" : "Light";
   }
 
-  if (button) {
-    button.setAttribute(
+  if(btn){
+    btn.setAttribute(
       "aria-label",
-      isLight
-        ? "Switch to dark theme"
-        : "Switch to light theme"
+      light ? "Switch to dark theme" : "Switch to light theme"
     );
 
-    button.title =
-      isLight
-        ? "Switch to dark theme"
-        : "Switch to light theme";
+    btn.setAttribute(
+      "aria-pressed",
+      light ? "true" : "false"
+    );
   }
 
-  /* Browser/PWA top bar color */
-  const meta = document.querySelector(
-    'meta[name="theme-color"]'
-  );
+  const meta = document.querySelector('meta[name="theme-color"]');
 
-  if (meta) {
+  if(meta){
     meta.setAttribute(
       "content",
-      isLight ? "#f4f1ea" : "#0b0e14"
+      light ? "#f4f1ea" : "#0b0e14"
     );
   }
 }
 
 
-/* Load saved theme */
-export function initTheme() {
-  const savedTheme =
-    localStorage.getItem(THEME_KEY);
+export function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
 
-  const theme =
-    savedTheme === "light"
-      ? "light"
-      : "dark";
-
-  applyTheme(theme);
+  if(saved === "light"){
+    applyTheme("light");
+  }else{
+    applyTheme("dark");
+  }
 }
 
 
-/* Toggle Dark <-> Light */
-export function toggleTheme() {
+export function toggleTheme(){
 
-  const currentTheme =
+  const current =
     document.body.classList.contains("light-theme")
       ? "light"
       : "dark";
 
-  const nextTheme =
-    currentTheme === "light"
+  const next =
+    current === "light"
       ? "dark"
       : "light";
 
-  /* Save */
-  localStorage.setItem(
-    THEME_KEY,
-    nextTheme
-  );
+  localStorage.setItem(THEME_KEY,next);
 
-  /* Apply immediately */
-  applyTheme(nextTheme);
+  applyTheme(next);
 
   toast(
-    nextTheme === "light"
+    next === "light"
       ? "Light theme enabled"
       : "Dark theme enabled"
   );
 }
 
 
-/* =========================================================
-   SETTINGS
-   ========================================================= */
+/* =========================
+   SETTINGS PAGE
+========================= */
 
-export function renderSettings() {
+export function renderSettings(){
 
   const name =
     document.getElementById("traderName");
@@ -120,17 +102,16 @@ export function renderSettings() {
   const notify =
     document.getElementById("notifyStatus");
 
-  if (name) {
-    name.value =
-      db.settings?.name || "";
+
+  if(name){
+    name.value = db.settings.name || "";
   }
 
-  if (market) {
-    market.value =
-      db.settings?.market || "";
+  if(market){
+    market.value = db.settings.market || "";
   }
 
-  if (counts) {
+  if(counts){
     counts.textContent =
       `${db.trades.length} trades · ` +
       `${db.setups.length} setups · ` +
@@ -138,43 +119,39 @@ export function renderSettings() {
       `${db.reviews.length} reviews`;
   }
 
-  if (notify) {
+  if(notify){
     notify.textContent =
       "Notification permission: " +
       (
-        "Notification" in window
+        ("Notification" in window)
           ? Notification.permission
           : "unsupported"
       );
   }
 
-  /* Always restore saved theme */
-  initTheme();
+  /*
+    Make sure the saved theme is applied
+    whenever Settings page is opened.
+  */
+  const savedTheme =
+    localStorage.getItem(THEME_KEY) === "light"
+      ? "light"
+      : "dark";
+
+  applyTheme(savedTheme);
 }
 
 
-/* Save settings */
-export function saveSettings() {
+export function saveSettings(){
 
-  if (!db.settings) {
-    db.settings = {
-      name: "",
-      market: "",
-      capital: 0
-    };
-  }
+  const name =
+    document.getElementById("traderName")?.value.trim() || "";
 
-  db.settings.name =
-    document
-      .getElementById("traderName")
-      ?.value
-      .trim() || "";
+  const market =
+    document.getElementById("defaultMarket")?.value.trim() || "";
 
-  db.settings.market =
-    document
-      .getElementById("defaultMarket")
-      ?.value
-      .trim() || "";
+  db.settings.name = name;
+  db.settings.market = market;
 
   saveDB();
 
@@ -182,111 +159,99 @@ export function saveSettings() {
 }
 
 
-/* =========================================================
-   BACKUP
-   ========================================================= */
+/* =========================
+   BACKUP / IMPORT
+========================= */
 
-export function exportData() {
+export function exportData(){
 
   const blob =
     new Blob(
-      [JSON.stringify(db, null, 2)],
-      {
-        type: "application/json"
-      }
+      [JSON.stringify(db,null,2)],
+      {type:"application/json"}
     );
-
-  const url =
-    URL.createObjectURL(blob);
 
   const a =
     document.createElement("a");
 
-  a.href = url;
+  a.href =
+    URL.createObjectURL(blob);
 
   a.download =
     "tradevault-backup-" +
-    new Date()
-      .toISOString()
-      .slice(0, 10) +
+    new Date().toISOString().slice(0,10) +
     ".json";
-
-  document.body.appendChild(a);
 
   a.click();
 
-  a.remove();
-
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(a.href);
 
   toast("Backup exported");
 }
 
 
-/* =========================================================
-   IMPORT
-   ========================================================= */
+export function importData(e){
 
-export function importData(event) {
+  const f =
+    e.target.files[0];
 
-  const file =
-    event.target.files?.[0];
+  if(!f){
+    return;
+  }
 
-  if (!file) return;
-
-  const reader =
+  const rd =
     new FileReader();
 
-  reader.onload = () => {
+  rd.onload = () => {
 
-    try {
+    try{
 
-      const imported =
-        JSON.parse(reader.result);
+      const x =
+        JSON.parse(rd.result);
 
-      if (
-        !Array.isArray(imported.trades) ||
-        !Array.isArray(imported.setups) ||
-        !Array.isArray(imported.reviews)
-      ) {
-        throw new Error("Invalid backup");
+      if(
+        !Array.isArray(x.trades) ||
+        !Array.isArray(x.setups) ||
+        !Array.isArray(x.reviews)
+      ){
+        throw Error();
       }
 
-      Object.assign(db, imported);
+      Object.assign(db,x);
 
       db.backtests ??= [];
 
       db.settings ??= {
-        name: "",
-        market: "",
-        capital: 0
+        name:"",
+        market:"",
+        capital:0
       };
 
       saveDB();
 
-      toast("Backup imported");
-
       renderSettings();
 
-    } catch (error) {
+      toast("Backup imported");
 
-      console.error(error);
+    }catch{
 
       toast("Invalid backup file");
+
     }
+
   };
 
-  reader.readAsText(file);
+  rd.readAsText(f);
 
-  event.target.value = "";
+  e.target.value = "";
 }
 
 
-/* =========================================================
+/* =========================
    CSV EXPORT
-   ========================================================= */
+========================= */
 
-export function exportCSV() {
+export function exportCSV(){
 
   const headers = [
     "Date",
@@ -320,59 +285,50 @@ export function exportCSV() {
       t.qty,
       t.pnl,
       t.r,
-      t.rule
-        ? "Followed"
-        : "Violation",
+      t.rule ? "Followed" : "Violation",
       t.emotion,
       t.mistake
     ]);
 
   const csv =
-    [headers, ...rows]
+    [headers,...rows]
       .map(row =>
         row
-          .map(value =>
-            `"${String(value ?? "")
-              .replaceAll('"', '""')}"`
+          .map(
+            v =>
+              `"${String(v ?? "").replaceAll('"','""')}"`
           )
           .join(",")
       )
       .join("\n");
 
-  const blob =
-    new Blob(
-      [csv],
-      { type: "text/csv" }
-    );
-
-  const url =
-    URL.createObjectURL(blob);
-
   const a =
     document.createElement("a");
 
-  a.href = url;
-  a.download = "tradevault-trades.csv";
+  a.href =
+    URL.createObjectURL(
+      new Blob(
+        [csv],
+        {type:"text/csv"}
+      )
+    );
 
-  document.body.appendChild(a);
+  a.download =
+    "tradevault-trades.csv";
 
   a.click();
-
-  a.remove();
-
-  URL.revokeObjectURL(url);
 
   toast("CSV exported");
 }
 
 
-/* =========================================================
+/* =========================
    NOTIFICATIONS
-   ========================================================= */
+========================= */
 
-export async function requestNotifications() {
+export async function requestNotifications(){
 
-  if (!("Notification" in window)) {
+  if(!("Notification" in window)){
 
     toast(
       "Notifications are not supported here"
@@ -381,34 +337,25 @@ export async function requestNotifications() {
     return;
   }
 
-  try {
+  const p =
+    await Notification.requestPermission();
 
-    const permission =
-      await Notification.requestPermission();
+  renderSettings();
 
-    renderSettings();
-
-    toast(
-      permission === "granted"
-        ? "Notifications enabled"
-        : `Permission: ${permission}`
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    toast("Notification permission failed");
-  }
+  toast(
+    p === "granted"
+      ? "Notifications enabled"
+      : `Permission: ${p}`
+  );
 }
 
 
-export function sendTestNotification() {
+export function sendTestNotification(){
 
-  if (
+  if(
     !("Notification" in window) ||
     Notification.permission !== "granted"
-  ) {
+  ){
 
     toast("Enable notifications first");
 
@@ -418,75 +365,67 @@ export function sendTestNotification() {
   new Notification(
     "TradeVault",
     {
-      body:
-        "Notification test is working."
+      body:"Notification test is working."
     }
   );
 }
 
 
-/* =========================================================
+/* =========================
    APP UPDATE
-   ========================================================= */
+========================= */
 
-export async function checkForUpdate() {
+export async function checkForUpdate(){
 
-  const status =
+  const el =
     document.getElementById("updateStatus");
 
-  if (!status) return;
+  if(!el){
+    return;
+  }
 
-  if (!("serviceWorker" in navigator)) {
+  if(!("serviceWorker" in navigator)){
 
-    status.textContent =
+    el.textContent =
       "Service worker not supported";
 
     return;
   }
 
-  try {
+  const reg =
+    await navigator.serviceWorker.getRegistration();
 
-    const registration =
-      await navigator.serviceWorker
-        .getRegistration();
+  if(!reg){
 
-    if (!registration) {
+    el.textContent =
+      "Service worker not registered yet";
 
-      status.textContent =
-        "Service worker not registered yet";
-
-      return;
-    }
-
-    await registration.update();
-
-    status.textContent =
-      registration.waiting
-        ? "Update ready — reload to apply."
-        : "App is up to date.";
-
-  } catch (error) {
-
-    console.error(error);
-
-    status.textContent =
-      "Unable to check for update.";
+    return;
   }
+
+  await reg.update();
+
+  el.textContent =
+    reg.waiting
+      ? "Update ready — reload to apply."
+      : "App is up to date.";
 }
 
 
-/* =========================================================
-   CLEAR DATA
-   ========================================================= */
+/* =========================
+   CLEAR ALL DATA
+========================= */
 
-export function clearAll() {
+export function clearAll(){
 
   const confirmed =
     confirm(
       "This will delete all trades, setups, backtests and reviews. Export first if needed."
     );
 
-  if (!confirmed) return;
+  if(!confirmed){
+    return;
+  }
 
   db.trades = [];
   db.setups = [];
@@ -495,17 +434,17 @@ export function clearAll() {
 
   saveDB();
 
-  toast("All data cleared");
-
   renderSettings();
+
+  toast("All data cleared");
 }
 
 
-/* =========================================================
+/* =========================
    GLOBAL FUNCTIONS
-   =========================================================
-   HTML onclick="" ke liye zaroori
-   ========================================================= */
+   Required because HTML uses
+   inline onclick handlers.
+========================= */
 
 window.exportData = exportData;
 window.importData = importData;
@@ -529,17 +468,9 @@ window.saveSettings =
 window.toggleTheme =
   toggleTheme;
 
-window.applyTheme =
-  applyTheme;
 
-window.initTheme =
-  initTheme;
-
-
-/* =========================================================
-   INITIAL THEME
-   =========================================================
-   JS load hote hi saved theme apply.
-   ========================================================= */
+/* =========================
+   INITIALIZE THEME
+========================= */
 
 initTheme();
