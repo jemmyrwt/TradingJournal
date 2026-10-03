@@ -9,6 +9,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>
+try {
+  if (localStorage.getItem("tradevault_theme") === "light") {
+    document.documentElement.classList.add("theme-light-preload");
+  }
+} catch (e) {}
+</script>
 <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
@@ -132,7 +139,7 @@
     <div class="field"><label>Trader name</label><input class="input" id="traderName" placeholder="Your name"></div>
     <div class="field"><label>Default market</label><input class="input" id="defaultMarket" placeholder="NIFTY / BANKNIFTY / Stocks"></div>
   </div><div class="form-actions left"><button class="btn primary" onclick="saveSettings()">Save Settings</button></div></div>
-  <div class="card theme-card"><div class="section-head"><div><h3>Appearance</h3><div class="muted">Switch between dark and off-white light theme.</div></div><button id="themeToggle" class="theme-toggle" type="button" onclick="toggleTheme()"><span id="themeIcon">☀</span><span id="themeText">Light</span></button></div></div>
+  <div class="card theme-card"><div class="section-head"><div><h3>Appearance</h3><div class="muted">Switch between dark and off-white light theme.</div></div><button id="themeToggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch to light theme" aria-pressed="false"><span id="themeIcon">☀</span><span id="themeText">Light</span></button></div></div>
   <div class="grid2">
     <div class="card"><div class="section-head"><h3>Backup & Import</h3></div><p class="muted">Keep a JSON backup before clearing browser data or changing devices.</p><div class="stack-actions"><button class="btn primary" onclick="exportData()">⇩ Export JSON Backup</button><button class="btn" onclick="document.getElementById('importFile').click()">⇧ Import JSON Backup</button><button class="btn" onclick="exportCSV()">Export Trades CSV</button></div><input type="file" id="importFile" accept=".json" hidden onchange="importData(event)"></div>
     <div class="card"><div class="section-head"><h3>Notifications</h3></div><p class="muted">Ask for notification permission only when you choose to enable reminders.</p><div class="stack-actions"><button class="btn primary" onclick="requestNotifications()">🔔 Enable Notifications</button><button class="btn" onclick="sendTestNotification()">Test Notification</button></div><div id="notifyStatus" class="muted" style="margin-top:10px"></div></div>
