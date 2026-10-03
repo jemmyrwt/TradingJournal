@@ -949,3 +949,7 @@ window.openTrade=openTrade;
 window.deleteTrade=deleteTrade;
 
 window.submitTrade=submitTrade;
+
+window.closeModal=closeModal;
+
+window.previewTrade=previewTrade;
