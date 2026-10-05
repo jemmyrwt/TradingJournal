@@ -195,6 +195,11 @@ window.closeModal=closeModal;
   Therefore event delegation is used
   instead of attaching listeners only
   when the page initially loads.
+
+  These handlers work with:
+  - data-close-modal on any element
+  - clicks on the dark backdrop
+  - Escape key presses
 */
 
 document.addEventListener(
@@ -202,7 +207,8 @@ document.addEventListener(
   e=>{
 
     /*
-      Cross / Cancel buttons.
+      Cross / Cancel buttons with
+      data-close-modal attribute.
     */
 
     const closeButton=
