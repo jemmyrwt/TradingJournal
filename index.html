@@ -1,157 +1,266 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>TradeVault</title>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#0b0e14">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>
-try {
-  if (localStorage.getItem("tradevault_theme") === "light") {
-    document.documentElement.classList.add("theme-light-preload");
-  }
-} catch (e) {}
-</script>
-<link rel="stylesheet" href="./css/style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TradeVault — Trading Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="app"><div class="shell">
-<aside class="side">
-  <div class="brand"><div class="logo">TV</div><div><b>TradeVault</b><small>Personal trading OS</small></div></div>
-  <nav class="nav" id="sideNav">
-    <button data-page="home" class="active"><i>⌂</i>Dashboard</button>
-    <button data-page="trades"><i>↗</i>Trades</button>
-    <button data-page="risk"><i>⌁</i>Risk Calculator</button>
-    <button data-page="calendar"><i>▦</i>Calendar</button>
-    <button data-page="analytics"><i>◔</i>Analytics</button>
-    <button data-page="playbook"><i>▤</i>Playbook</button>
-    <button data-page="backtesting"><i>◉</i>Backtesting</button>
-    <button data-page="reviews"><i>✓</i>Reviews</button>
-    <button data-page="settings"><i>⚙</i>Settings</button>
-  </nav>
-  <div class="side-foot">Everything stays on this device.<br>Export a backup regularly.</div>
-</aside>
 
-<main class="main">
-<header class="top">
-  <div class="title"><h1 id="pageTitle">Dashboard</h1><p id="pageSub">Your trading process at a glance.</p></div>
-  <div class="actions"><button class="btn hide-m" onclick="openTrade()">＋ Add Trade</button><button class="btn iconbtn" onclick="exportData()">⇩</button></div>
-</header>
-
-<section class="page active" id="page-home">
-  <div class="cards">
-    <div class="card stat"><small>Net P&L</small><strong id="sPnl">₹0</strong></div>
-    <div class="card stat"><small>Total R</small><strong id="sR">0.00R</strong></div>
-    <div class="card stat"><small>Win Rate</small><strong id="sWin">0%</strong></div>
-    <div class="card stat"><small>Trades</small><strong id="sTrades">0</strong></div>
-  </div>
-  <div class="grid2">
-    <div class="card"><div class="section-head"><h3>Equity Curve</h3><span class="muted" id="equityRange">No trades</span></div><div class="chart" id="equityChart"></div></div>
-    <div class="card"><div class="section-head"><h3>Quick Stats</h3></div><div class="kpis">
-      <div class="mini"><span>Profit Factor</span><b id="pf">—</b></div><div class="mini"><span>Expectancy</span><b id="exp">—</b></div>
-      <div class="mini"><span>Max DD</span><b id="dd">0R</b></div><div class="mini"><span>Best Trade</span><b id="best">—</b></div>
-      <div class="mini"><span>Avg Win</span><b id="avgw">—</b></div><div class="mini"><span>Avg Loss</span><b id="avgl">—</b></div>
-    </div></div>
-  </div>
-  <div class="grid2">
-    <div class="card"><div class="section-head"><h3>Recent Trades</h3><button class="btn" onclick="go('trades')">View all</button></div><div id="recent"></div></div>
-    <div class="card"><div class="section-head"><h3>Trading Streak</h3></div><div id="streakBox" class="empty"></div></div>
-  </div>
-</section>
-
-<section class="page" id="page-trades">
-  <div class="toolbar">
-    <input class="input" id="search" placeholder="Search symbol, setup, notes..." oninput="renderTrades()">
-    <div class="app-select" data-select="filterDir"><input type="hidden" id="filterDir" value=""><button type="button" class="app-select-trigger">All directions</button><div class="app-select-menu"><button class="app-option selected" data-value="">All directions</button><button class="app-option" data-value="Long">Long</button><button class="app-option" data-value="Short">Short</button></div></div>
-    <div class="app-select" data-select="filterResult"><input type="hidden" id="filterResult" value=""><button type="button" class="app-select-trigger">All results</button><div class="app-select-menu"><button class="app-option selected" data-value="">All results</button><button class="app-option" data-value="win">Wins</button><button class="app-option" data-value="loss">Losses</button><button class="app-option" data-value="be">Breakeven</button></div></div>
-    <button class="btn primary" onclick="openTrade()">＋ Add Trade</button>
-  </div>
-  <div class="card"><div id="tradesList"></div></div>
-</section>
-
-<section class="page" id="page-risk">
-  <div class="card">
-    <div class="section-head"><div><h3>Risk Calculator</h3><div class="muted">Calculate position size before entering a trade.</div></div><button class="btn" onclick="riskToTrade()">Use in Add Trade</button></div>
-    <div class="formgrid">
-      <div class="field"><label>Capital ₹</label><input class="input" id="rc_capital" type="number" step="any" placeholder="50000"></div>
-      <div class="field"><label>Risk %</label><input class="input" id="rc_riskpct" type="number" step="any" value="1"></div>
-      <div class="field"><label>Entry Price</label><input class="input" id="rc_entry" type="number" step="any" placeholder="100"></div>
-      <div class="field"><label>Stop Loss Price</label><input class="input" id="rc_sl" type="number" step="any" placeholder="95"></div>
-      <div class="field"><label>Target Price</label><input class="input" id="rc_target" type="number" step="any" placeholder="110"></div>
-      <div class="field"><label>Direction</label><div class="app-select" data-select="rc_dir"><input type="hidden" id="rc_dir" value="Long"><button type="button" class="app-select-trigger">Long</button><div class="app-select-menu"><button class="app-option selected" data-value="Long">Long</button><button class="app-option" data-value="Short">Short</button></div></div></div>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">TV</div>
+      <div>TradeVault</div>
     </div>
-    <div class="result-grid">
-      <div class="mini"><span>₹ Risk</span><b id="rc_rupee">—</b></div><div class="mini"><span>Risk / Unit</span><b id="rc_perunit">—</b></div>
-      <div class="mini"><span>Position Size</span><b id="rc_qty">—</b></div><div class="mini"><span>R:R</span><b id="rc_rr">—</b></div>
-      <div class="mini"><span>Target Profit ₹</span><b id="rc_profit">—</b></div><div class="mini"><span>Capital Used ₹</span><b id="rc_used">—</b></div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+        <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="btn btn-primary" id="addTradeTop">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Trade
+      </button>
     </div>
+  </header>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="page-dashboard">
+    <div class="page-head">
+      <h1>Dashboard</h1>
+      <p>Aaj tak ka aapka trading performance overview</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Net P&L</div>
+        <div class="stat-value" id="dashPnl">₹0.00</div>
+        <div class="stat-sub" id="dashPnlSub">0 trades</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Win Rate</div>
+        <div class="stat-value" id="dashWinRate">0%</div>
+        <div class="stat-sub" id="dashWinSub">0 wins / 0 total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Trades</div>
+        <div class="stat-value" id="dashTrades">0</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg. R:R</div>
+        <div class="stat-value" id="dashRR">—</div>
+        <div class="stat-sub">Risk to reward</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Recent Trades</h2>
+        <button class="btn" onclick="go('trades')">View all</button>
+      </div>
+      <div id="dashRecent"></div>
+    </div>
+  </section>
+
+  <!-- ============ TRADES ============ -->
+  <section id="page-trades" class="hidden">
+    <div class="page-head">
+      <h1>Trades</h1>
+      <p>Apne saare trades yahan manage karo</p>
+    </div>
+
+    <div class="card">
+      <div class="filters">
+        <input type="text" id="filterSearch" placeholder="Search symbol..." />
+        <select id="filterSide">
+          <option value="">All sides</option>
+          <option value="BUY">Buy</option>
+          <option value="SELL">Sell</option>
+        </select>
+        <select id="filterResult">
+          <option value="">All results</option>
+          <option value="win">Wins</option>
+          <option value="loss">Losses</option>
+        </select>
+      </div>
+      <div id="tradesList"></div>
+    </div>
+  </section>
+
+  <!-- ============ ANALYTICS ============ -->
+  <section id="page-analytics" class="hidden">
+    <div class="page-head">
+      <h1>Analytics</h1>
+      <p>Aapke trading ka deep dive</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Win / Loss</h2></div>
+      <div class="donut-wrap">
+        <div class="donut" id="donut" style="--p:0">
+          <div class="donut-val" id="donutVal">0%</div>
+        </div>
+        <div class="legend">
+          <div class="legend-row"><div class="dot" style="background:var(--green)"></div><span id="legendWins">0 Wins</span></div>
+          <div class="legend-row"><div class="dot" style="background:var(--red)"></div><span id="legendLosses">0 Losses</span></div>
+          <div class="legend-row"><div class="dot" style="background:var(--border)"></div><span id="legendBE">0 Breakeven</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>P&L by Trade</h2></div>
+      <div class="chart" id="pnlChart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Quick Stats</h2></div>
+      <div class="mini-stats">
+        <div class="mini"><div class="k">Best Trade</div><div class="v pos" id="aBest">₹0</div></div>
+        <div class="mini"><div class="k">Worst Trade</div><div class="v neg" id="aWorst">₹0</div></div>
+        <div class="mini"><div class="k">Avg Win</div><div class="v pos" id="aAvgWin">₹0</div></div>
+        <div class="mini"><div class="k">Avg Loss</div><div class="v neg" id="aAvgLoss">₹0</div></div>
+        <div class="mini"><div class="k">Total Trades</div><div class="v" id="aTotal">0</div></div>
+        <div class="mini"><div class="k">Profit Factor</div><div class="v" id="aPF">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section id="page-settings" class="hidden">
+    <div class="page-head">
+      <h1>Settings</h1>
+      <p>App preferences aur data management</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Appearance</h2></div>
+      <div class="field">
+        <label>Theme</label>
+        <select id="themeSelect">
+          <option value="light">Light (Off-white)</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Data</h2></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn" id="exportBtn">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export JSON
+        </button>
+        <button class="btn" id="importBtn">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import JSON
+        </button>
+        <button class="btn btn-danger" id="clearBtn">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Clear All Data
+        </button>
+        <input type="file" id="importFile" accept="application/json" class="hidden" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>About</h2></div>
+      <p style="color:var(--text-dim); font-size:13.5px;">
+        TradeVault — ek simple offline trading journal. Aapka data sirf aapke browser me (localStorage) save hota hai. Koi server nahi.
+      </p>
+    </div>
+  </section>
+</div>
+
+<!-- ============ Bottom Nav ============ -->
+<nav class="bottom">
+  <button class="nav-item active" data-page="dashboard">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+    <span>Dashboard</span>
+  </button>
+  <button class="nav-item" data-page="trades">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    <span>Trades</span>
+  </button>
+  <button class="nav-item" data-page="analytics">
+    <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 6-6"/></svg>
+    <span>Analytics</span>
+  </button>
+  <button class="nav-item" data-page="settings">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<!-- ============ Add/Edit Trade Modal ============ -->
+<div class="modal-backdrop" id="tradeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="tradeModalTitle">Add Trade</h3>
+      <button class="close-x" onclick="closeTradeModal()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <form id="tradeForm" class="form-grid" autocomplete="off">
+      <input type="hidden" id="tradeId" />
+
+      <div class="field">
+        <label>Symbol *</label>
+        <input type="text" id="tSymbol" placeholder="e.g. NIFTY, RELIANCE" required />
+      </div>
+
+      <div class="field">
+        <label>Side *</label>
+        <select id="tSide" required>
+          <option value="BUY">BUY</option>
+          <option value="SELL">SELL</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Entry Price *</label>
+        <input type="number" step="any" id="tEntry" required />
+      </div>
+
+      <div class="field">
+        <label>Exit Price *</label>
+        <input type="number" step="any" id="tExit" required />
+      </div>
+
+      <div class="field">
+        <label>Quantity *</label>
+        <input type="number" step="any" id="tQty" required />
+      </div>
+
+      <div class="field">
+        <label>Date *</label>
+        <input type="date" id="tDate" required />
+      </div>
+
+      <div class="field full">
+        <label>Notes</label>
+        <textarea id="tNotes" placeholder="Kuch notes likho..."></textarea>
+      </div>
+
+      <div class="full" style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+        <button type="button" class="btn" onclick="closeTradeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="saveTradeBtn">Save Trade</button>
+      </div>
+    </form>
   </div>
-</section>
+</div>
 
-<section class="page" id="page-calendar">
-  <div class="card">
-    <div class="section-head"><button class="btn" onclick="changeMonth(-1)">‹</button><h3 id="calTitle">Calendar</h3><button class="btn" onclick="changeMonth(1)">›</button></div>
-    <div class="calendar-head"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
-    <div class="calendar-grid" id="calendarGrid"></div>
-  </div>
-  <div class="card" style="margin-top:14px"><div class="section-head"><h3 id="dayTitle">Selected day</h3></div><div id="dayTrades"></div></div>
-</section>
+<div id="toast"></div>
 
-<section class="page" id="page-analytics">
-  <div class="cards"><div class="card stat"><small>Profit Factor</small><strong id="aPF">—</strong></div><div class="card stat"><small>Expectancy / trade</small><strong id="aExp">—</strong></div><div class="card stat"><small>Max Drawdown</small><strong id="aDD">0R</strong></div><div class="card stat"><small>Rule Adherence</small><strong id="aRule">0%</strong></div></div>
-  <div class="card" style="margin-top:14px"><div class="section-head"><h3>Performance Filters</h3></div><div class="toolbar">
-    <div class="app-select" data-select="anPeriod"><input type="hidden" id="anPeriod" value="all"><button type="button" class="app-select-trigger">All time</button><div class="app-select-menu"><button class="app-option selected" data-value="all">All time</button><button class="app-option" data-value="30">Last 30 days</button><button class="app-option" data-value="90">Last 90 days</button></div></div>
-    <input class="input" id="anSymbol" placeholder="Symbol filter" oninput="renderAnalytics()">
-  </div></div>
-  <div class="grid2">
-    <div class="card"><div class="section-head"><h3>R-Multiple Curve</h3></div><div class="chart" id="rChart"></div></div>
-    <div class="card"><div class="section-head"><h3>Direction</h3></div><div id="directionStats"></div></div>
-  </div>
-  <div class="grid2">
-    <div class="card"><div class="section-head"><h3>Setup Performance</h3></div><div id="setupStats"></div></div>
-    <div class="card"><div class="section-head"><h3>Psychology & Rule Breaks</h3></div><div id="psychStats"></div></div>
-  </div>
-</section>
-
-<section class="page" id="page-playbook">
-  <div class="section-head"><div><h3 style="margin:0">Your Playbook</h3><div class="muted" style="font-size:12px;margin-top:4px">Keep setups explicit and consistent.</div></div><button class="btn primary" onclick="openSetup()">＋ Add Setup</button></div>
-  <div id="playbookList" class="trade-list"></div>
-</section>
-
-<section class="page" id="page-backtesting">
-  <div class="section-head"><div><h3 style="margin:0">Backtesting Lab</h3><div class="muted" style="font-size:12px;margin-top:4px">Record historical tests separately from live trades.</div></div><button class="btn primary" onclick="openBacktest()">＋ Add Test</button></div>
-  <div class="cards" id="btStats"></div>
-  <div class="card" style="margin-top:14px"><div id="backtestList"></div></div>
-</section>
-
-<section class="page" id="page-reviews">
-  <div class="section-head"><div><h3 style="margin:0">Reviews</h3><div class="muted" style="font-size:12px;margin-top:4px">Review process, not just money.</div></div><button class="btn primary" onclick="openReview()">＋ Add Review</button></div>
-  <div class="review-tabs"><button class="tab active" onclick="setReviewFilter('all',this)">All</button><button class="tab" onclick="setReviewFilter('daily',this)">Daily</button><button class="tab" onclick="setReviewFilter('weekly',this)">Weekly</button><button class="tab" onclick="setReviewFilter('monthly',this)">Monthly</button></div>
-  <div id="reviewsList" class="trade-list"></div>
-</section>
-
-<section class="page" id="page-settings">
-  <div class="card"><div class="section-head"><h3>Settings</h3></div><div class="formgrid">
-    <div class="field"><label>Trader name</label><input class="input" id="traderName" placeholder="Your name"></div>
-    <div class="field"><label>Default market</label><input class="input" id="defaultMarket" placeholder="NIFTY / BANKNIFTY / Stocks"></div>
-  </div><div class="form-actions left"><button class="btn primary" onclick="saveSettings()">Save Settings</button></div></div>
-  <div class="card theme-card"><div class="section-head"><div><h3>Appearance</h3><div class="muted">Switch between dark and off-white light theme.</div></div><button id="themeToggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch to light theme" aria-pressed="false"><span id="themeIcon">☀</span><span id="themeText">Light</span></button></div></div>
-  <div class="grid2">
-    <div class="card"><div class="section-head"><h3>Backup & Import</h3></div><p class="muted">Keep a JSON backup before clearing browser data or changing devices.</p><div class="stack-actions"><button class="btn primary" onclick="exportData()">⇩ Export JSON Backup</button><button class="btn" onclick="document.getElementById('importFile').click()">⇧ Import JSON Backup</button><button class="btn" onclick="exportCSV()">Export Trades CSV</button></div><input type="file" id="importFile" accept=".json" hidden onchange="importData(event)"></div>
-    <div class="card"><div class="section-head"><h3>Notifications</h3></div><p class="muted">Ask for notification permission only when you choose to enable reminders.</p><div class="stack-actions"><button class="btn primary" onclick="requestNotifications()">🔔 Enable Notifications</button><button class="btn" onclick="sendTestNotification()">Test Notification</button></div><div id="notifyStatus" class="muted" style="margin-top:10px"></div></div>
-  </div>
-  <div class="grid2">
-    <div class="card"><div class="section-head"><h3>App Update</h3></div><p class="muted">Check whether a newer service worker is available.</p><button class="btn" onclick="checkForUpdate()">Check for update</button><div id="updateStatus" class="muted" style="margin-top:10px"></div></div>
-    <div class="card"><div class="section-head"><h3>Data Management</h3></div><p class="muted">Current local records: <b id="dataCounts"></b></p><button class="btn danger" onclick="clearAll()">Clear All Data</button></div>
-  </div>
-</section>
-</main></div>
-<nav class="bottom" id="bottomNav"></nav><button class="fab" onclick="openTrade()">＋</button></div>
-
-<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div><div class="toast" id="toast"></div>
-<script type="module" src="./js/app.js"></script>
-</body></html>
+<!-- Scripts -->
+<script src="ui.js"></script>
+<script src="trades.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
