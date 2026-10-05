@@ -1,114 +1,310 @@
-import {esc,money,db,saveDB,uid} from "./storage.js";
+import {
+  esc,
+  money,
+  db,
+  saveDB,
+  uid
+} from "./storage.js";
+
+
+/* =========================
+   TOAST
+========================= */
 
 export function toast(msg){
+
   const t=document.getElementById("toast");
+
   if(!t)return;
 
   t.textContent=msg;
+
   t.classList.add("show");
 
   clearTimeout(window.__tt);
 
   window.__tt=setTimeout(()=>{
+
     t.classList.remove("show");
+
   },2200);
+
 }
 
 
 /* =========================
-   MODAL
+   OPEN MODAL
 ========================= */
 
 export function openModal(html){
 
   const modal=document.getElementById("modal");
+
   const box=document.getElementById("modalbox");
 
-  if(!modal || !box)return;
+
+  if(!modal || !box){
+
+    console.error(
+      "TradeVault: modal container not found"
+    );
+
+    return false;
+
+  }
+
+
+  /*
+    Completely clear previous modal.
+  */
+
+  box.innerHTML="";
+
+  modal.classList.remove("open");
+
+
+  /*
+    Insert new modal content.
+  */
 
   box.innerHTML=html;
 
+
+  /*
+    CSS uses:
+
+    .modal.open{
+      display:flex;
+    }
+  */
+
   modal.classList.add("open");
+
+  modal.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+
+  /*
+    Lock background scrolling.
+  */
 
   document.body.style.overflow="hidden";
 
+  document.documentElement.style.overflow="hidden";
+
+
+  /*
+    Initialize dynamically-created
+    custom dropdowns.
+  */
+
   initSelects(box);
+
+
+  return true;
+
 }
 
+
+/* =========================
+   CLOSE MODAL
+========================= */
 
 export function closeModal(){
 
   const modal=document.getElementById("modal");
 
+  const box=document.getElementById("modalbox");
+
+
   if(!modal)return;
+
+
+  /*
+    Remove visible state.
+  */
 
   modal.classList.remove("open");
 
+  modal.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+
+  /*
+    Remove old modal HTML.
+
+    This is important because the
+    dynamically-created form should
+    no longer remain active.
+  */
+
+  if(box){
+
+    box.innerHTML="";
+
+  }
+
+
+  /*
+    Restore page scrolling.
+  */
+
   document.body.style.overflow="";
+
+  document.documentElement.style.overflow="";
+
+
+  /*
+    Close any custom dropdown.
+  */
+
+  document
+    .querySelectorAll(".app-select.open")
+    .forEach(x=>{
+
+      x.classList.remove("open");
+
+    });
+
 }
 
 
 /*
-  HTML inside the modal uses inline
-  onclick="closeModal()".
-  Because this file is an ES module,
-  the function must also be exposed
-  on window.
+  Keep compatibility with the other
+  modules that still use:
+
+  onclick="closeModal()"
 */
+
 window.closeModal=closeModal;
 
 
-/* Close when clicking modal backdrop */
+/* =========================
+   MODAL CLOSE EVENTS
+========================= */
 
-const modalElement=document.getElementById("modal");
+/*
+  IMPORTANT:
 
-if(modalElement){
+  Modal HTML is dynamically created.
 
-  modalElement.addEventListener("click",e=>{
+  Therefore event delegation is used
+  instead of attaching listeners only
+  when the page initially loads.
+*/
 
-    if(e.target===modalElement || e.target.id==="modal"){
+document.addEventListener(
+  "click",
+  e=>{
+
+    /*
+      Cross / Cancel buttons.
+    */
+
+    const closeButton=
+      e.target.closest(
+        "[data-close-modal]"
+      );
+
+
+    if(closeButton){
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
       closeModal();
+
+      return;
+
     }
 
-  });
 
-}
+    /*
+      Click on dark backdrop.
+    */
+
+    const modal=
+      document.getElementById("modal");
 
 
-/* Close modal with Escape */
+    if(
+      modal &&
+      e.target===modal
+    ){
 
-document.addEventListener("keydown",e=>{
+      e.preventDefault();
 
-  if(
-    e.key==="Escape" &&
-    document.getElementById("modal")?.classList.contains("open")
-  ){
+      closeModal();
 
-    e.preventDefault();
+    }
 
-    closeModal();
   }
+);
 
-});
+
+/* =========================
+   ESCAPE KEY
+========================= */
+
+document.addEventListener(
+  "keydown",
+  e=>{
+
+    if(e.key!=="Escape")return;
+
+
+    const modal=
+      document.getElementById("modal");
+
+
+    if(
+      modal &&
+      modal.classList.contains("open")
+    ){
+
+      e.preventDefault();
+
+      closeModal();
+
+    }
+
+  }
+);
 
 
 /* =========================
    CUSTOM SELECT
 ========================= */
 
-export function appSelect(id,value,options){
+export function appSelect(
+  id,
+  value,
+  options
+){
 
   const label=
     (
       options.find(
         o=>String(o[0])===String(value)
-      ) ||
-      options[0] ||
+      )
+      ||
+      options[0]
+      ||
       ["","Select"]
     )[1];
 
+
   return `
-    <div class="app-select" data-select="${id}">
+
+    <div
+      class="app-select"
+      data-select="${id}"
+    >
 
       <input
         type="hidden"
@@ -119,107 +315,218 @@ export function appSelect(id,value,options){
       <button
         type="button"
         class="app-select-trigger"
-      >${esc(label)}</button>
+      >
+        ${esc(label)}
+      </button>
 
       <div class="app-select-menu">
 
-        ${options.map(o=>`
+        ${
+          options
+            .map(o=>`
 
-          <button
-            type="button"
-            class="app-option ${String(o[0])===String(value)?"selected":""}"
-            data-value="${esc(o[0])}"
-          >${esc(o[1])}</button>
+              <button
+                type="button"
+                class="app-option ${
+                  String(o[0])===String(value)
+                    ?"selected"
+                    :""
+                }"
+                data-value="${esc(o[0])}"
+              >
+                ${esc(o[1])}
+              </button>
 
-        `).join("")}
+            `)
+            .join("")
+        }
 
       </div>
 
     </div>
+
   `;
+
 }
 
 
-export function initSelects(root=document){
+/* =========================
+   INIT CUSTOM SELECTS
+========================= */
 
-  root.querySelectorAll(".app-select").forEach(box=>{
+export function initSelects(
+  root=document
+){
 
-    if(box.dataset.bound)return;
+  root
+    .querySelectorAll(".app-select")
+    .forEach(box=>{
 
-    const trigger=
-      box.querySelector(".app-select-trigger");
-
-    const input=
-      box.querySelector("input[type=hidden]");
-
-    if(!trigger || !input)return;
-
-    box.dataset.bound="1";
+      if(box.dataset.bound)return;
 
 
-    trigger.addEventListener("click",e=>{
+      const trigger=
+        box.querySelector(
+          ".app-select-trigger"
+        );
 
-      e.stopPropagation();
 
-      document
-        .querySelectorAll(".app-select.open")
-        .forEach(x=>{
+      const input=
+        box.querySelector(
+          'input[type="hidden"]'
+        );
 
-          if(x!==box){
-            x.classList.remove("open");
-          }
+
+      if(!trigger || !input)return;
+
+
+      box.dataset.bound="1";
+
+
+      /*
+        Open / close dropdown.
+      */
+
+      trigger.addEventListener(
+        "click",
+        e=>{
+
+          e.preventDefault();
+
+          e.stopPropagation();
+
+
+          document
+            .querySelectorAll(
+              ".app-select.open"
+            )
+            .forEach(x=>{
+
+              if(x!==box){
+
+                x.classList.remove(
+                  "open"
+                );
+
+              }
+
+            });
+
+
+          box.classList.toggle(
+            "open"
+          );
+
+        }
+      );
+
+
+      /*
+        Select option.
+      */
+
+      box
+        .querySelectorAll(
+          ".app-option"
+        )
+        .forEach(opt=>{
+
+          opt.addEventListener(
+            "click",
+            e=>{
+
+              e.preventDefault();
+
+              e.stopPropagation();
+
+
+              input.value=
+                opt.dataset.value;
+
+
+              trigger.textContent=
+                opt.textContent.trim();
+
+
+              box
+                .querySelectorAll(
+                  ".app-option"
+                )
+                .forEach(x=>{
+
+                  x.classList.remove(
+                    "selected"
+                  );
+
+                });
+
+
+              opt.classList.add(
+                "selected"
+              );
+
+
+              box.classList.remove(
+                "open"
+              );
+
+
+              input.dispatchEvent(
+                new Event(
+                  "change",
+                  {
+                    bubbles:true
+                  }
+                )
+              );
+
+            }
+          );
 
         });
 
-      box.classList.toggle("open");
-
     });
 
+}
 
-    box.querySelectorAll(".app-option").forEach(opt=>{
 
-      opt.addEventListener("click",e=>{
+/* =========================
+   CLOSE CUSTOM SELECTS
+========================= */
 
-        e.stopPropagation();
+document.addEventListener(
+  "click",
+  e=>{
 
-        input.value=opt.dataset.value;
+    if(
+      e.target.closest(
+        ".app-select"
+      )
+    ){
 
-        trigger.textContent=opt.textContent;
+      return;
 
-        box
-          .querySelectorAll(".app-option")
-          .forEach(x=>x.classList.remove("selected"));
+    }
 
-        opt.classList.add("selected");
 
-        box.classList.remove("open");
+    document
+      .querySelectorAll(
+        ".app-select.open"
+      )
+      .forEach(x=>{
 
-        input.dispatchEvent(
-          new Event("change",{bubbles:true})
+        x.classList.remove(
+          "open"
         );
 
       });
 
-    });
-
-  });
-
-}
-
-
-/* Close custom selects */
-
-document.addEventListener("click",()=>{
-
-  document
-    .querySelectorAll(".app-select.open")
-    .forEach(x=>x.classList.remove("open"));
-
-});
+  }
+);
 
 
 /* =========================
-   CHART
+   CHART SVG
 ========================= */
 
 export function chartSVG(vals){
@@ -227,38 +534,87 @@ export function chartSVG(vals){
   if(!vals.length){
 
     return `
+
       <div class="empty">
+
         <div>
+
           <b>No curve yet</b>
-          <span>Your curve appears after trades are added.</span>
+
+          <span>
+            Your curve appears after
+            trades are added.
+          </span>
+
         </div>
+
       </div>
+
     `;
+
   }
 
-  let min=Math.min(0,...vals);
-  let max=Math.max(0,...vals);
-  let range=max-min||1;
 
-  let w=760;
-  let h=250;
-  let p=20;
+  let min=
+    Math.min(
+      0,
+      ...vals
+    );
 
-  let pts=vals.map((v,i)=>{
 
-    const x=
-      p+
-      i*((w-p*2)/Math.max(1,vals.length-1));
+  let max=
+    Math.max(
+      0,
+      ...vals
+    );
 
-    const y=
-      h-p-
-      ((v-min)/range)*(h-p*2);
 
-    return `${x},${y}`;
+  let range=
+    max-min || 1;
 
-  }).join(" ");
+
+  const w=760;
+
+  const h=250;
+
+  const p=20;
+
+
+  const pts=
+    vals
+      .map((v,i)=>{
+
+        const x=
+          p+
+          i*
+          (
+            (w-p*2)/
+            Math.max(
+              1,
+              vals.length-1
+            )
+          );
+
+
+        const y=
+          h-p-
+          (
+            (v-min)/
+            range
+          )*
+          (
+            h-p*2
+          );
+
+
+        return `${x},${y}`;
+
+      })
+      .join(" ");
+
 
   return `
+
     <svg
       viewBox="0 0 ${w} ${h}"
       preserveAspectRatio="none"
@@ -296,7 +652,9 @@ export function chartSVG(vals){
       </defs>
 
     </svg>
+
   `;
+
 }
 
 
@@ -306,25 +664,32 @@ export function chartSVG(vals){
 
 export function tradeCard(t){
 
+  const pnl=
+    Number(t.pnl)||0;
+
+
+  const r=
+    Number(t.r)||0;
+
+
   return `
+
     <div class="trade">
 
       <div>
 
         <div class="sym">
-
-          ${esc(t.symbol)}
-
-          <span
-            class="pill ${String(t.direction).toLowerCase()}"
-          >
-            ${esc(t.direction)}
-          </span>
-
+          ${esc(t.symbol || "—")}
         </div>
 
         <div class="meta">
-          ${esc(t.date)} · ${esc(t.setup||"Unspecified")}
+
+          ${esc(t.date || "")}
+
+          ·
+
+          ${esc(t.setup || "Unspecified")}
+
         </div>
 
       </div>
@@ -332,45 +697,78 @@ export function tradeCard(t){
 
       <div class="trade-mid">
 
-        <div>
-          ${Number(t.pnl)>=0?"+":""}₹${money(t.pnl)}
-        </div>
+        <span
+          class="pill ${
+            t.direction==="Short"
+              ?"short"
+              :"long"
+          }"
+        >
+          ${esc(t.direction || "Long")}
+        </span>
 
-        <div class="meta">
-          ${Number(t.r)>=0?"+":""}${Number(t.r).toFixed(2)}R ·
-          ${t.rule?"Rules ✓":"Violation"}
-        </div>
+        <span class="pill">
+          ${esc(t.timeframe || "—")}
+        </span>
 
       </div>
 
 
-      <div
-        class="${Number(t.r)>0?"green":Number(t.r)<0?"red":""}"
-        style="font-weight:800"
-      >
-        ${Number(t.r)>0?"+":""}${Number(t.r||0).toFixed(2)}R
+      <div>
+
+        <b
+          class="${
+            r>0
+              ?"green"
+              :
+            r<0
+              ?"red"
+              :""
+          }"
+        >
+          ${r>=0?"+":""}${r.toFixed(2)}R
+        </b>
+
+        <div class="meta">
+
+          ${
+            pnl>=0
+              ?"+"
+              :""
+          }₹${money(Math.abs(pnl))}
+
+        </div>
+
       </div>
 
 
       <div class="trade-actions">
 
-        <button onclick="openTrade('${t.id}')">
-          View/Edit
+        <button
+          type="button"
+          onclick="openTrade('${esc(t.id)}')"
+        >
+          Edit
         </button>
 
-        <button onclick="deleteTrade('${t.id}')">
+        <button
+          type="button"
+          onclick="deleteTrade('${esc(t.id)}')"
+        >
           Delete
         </button>
 
       </div>
 
     </div>
+
   `;
+
 }
 
 
 /* =========================
-   IMAGE INPUT
+   SETUP IMAGE INPUT
 ========================= */
 
 export function setupImageInput(
@@ -379,18 +777,29 @@ export function setupImageInput(
 ){
 
   return `
+
     <div class="field">
 
-      <label>${label}</label>
+      <label>
+        ${esc(label)}
+      </label>
 
       <input
         class="input"
         type="file"
-        id="${id}"
+        id="${esc(id)}"
         accept="image/*"
         capture="environment"
+        multiple
       >
 
     </div>
+
   `;
+
 }
+
+
+/* =========================
+   END UI
+========================= */
