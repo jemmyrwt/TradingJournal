@@ -62,7 +62,7 @@ export function openTrade(id=""){
       <button
         type="button"
         class="x"
-        onclick="closeModal()"
+        data-close-modal
         aria-label="Close"
       >
         ×
@@ -73,7 +73,8 @@ export function openTrade(id=""){
 
     <form
       class="form"
-      onsubmit="submitTrade(event,'${id}')"
+      data-trade-form="1"
+      data-trade-id="${esc(id)}"
     >
 
       <div class="formgrid">
@@ -408,7 +409,7 @@ export function openTrade(id=""){
         <button
           type="button"
           class="btn"
-          onclick="closeModal()"
+          data-close-modal
         >
           Cancel
         </button>
@@ -593,204 +594,359 @@ async function fileToDataURL(f){
    SAVE TRADE
 ========================= */
 
-export async function submitTrade(e,id){
+export async function submitTrade(e,id=""){
 
-  e.preventDefault();
-
-
-  const old=
-    db.trades.find(x=>x.id===id);
-
-
-  let screenshots=
-    old?.screenshots || [];
+  if(e){
+    e.preventDefault();
+    e.stopPropagation();
+  }
 
 
-  const imageInput=
-    document.getElementById("t_images");
+  const form=
+    e?.target?.closest?.(
+      'form[data-trade-form]'
+    )
+    ||
+    document.querySelector(
+      'form[data-trade-form]'
+    );
 
 
-  const files=
-    imageInput
-      ? [...imageInput.files]
-      : [];
+  if(
+    form?.dataset.saving==="1"
+  ){
+    return;
+  }
 
 
-  if(files.length){
+  if(form){
 
-    const data=
-      await Promise.all(
-        files
-          .slice(0,4)
-          .map(fileToDataURL)
+    form.dataset.saving="1";
+
+  }
+
+
+  const saveButton=
+    form?.querySelector(
+      'button[type="submit"]'
+    );
+
+
+  const originalText=
+    saveButton?.textContent ||
+    "Save Trade";
+
+
+  if(saveButton){
+
+    saveButton.disabled=true;
+
+    saveButton.textContent=
+      "Saving…";
+
+  }
+
+
+  try{
+
+    const old=
+      db.trades.find(
+        x=>x.id===id
       );
 
-    screenshots=[
-      ...screenshots,
-      ...data
-    ];
 
-  }
+    let screenshots=
+      old?.screenshots || [];
 
 
-  const t={
+    const imageInput=
+      document.getElementById(
+        "t_images"
+      );
 
-    id:id||uid(),
 
-    date:
-      document.getElementById("t_date")?.value || "",
+    const files=
+      imageInput
+        ?
+        Array.from(
+          imageInput.files || []
+        )
+        :
+        [];
 
-    symbol:
-      document
-        .getElementById("t_symbol")
-        ?.value
+
+    if(files.length){
+
+      const data=
+        await Promise.all(
+          files
+            .slice(0,4)
+            .map(fileToDataURL)
+        );
+
+
+      screenshots=[
+        ...screenshots,
+        ...data
+      ];
+
+    }
+
+
+    const value=id=>{
+
+      const el=
+        document.getElementById(id);
+
+      return el
+        ? el.value
+        : "";
+
+    };
+
+
+    const symbol=
+      value("t_symbol")
         .trim()
-        .toUpperCase() || "",
+        .toUpperCase();
 
-    direction:
-      document.getElementById("t_direction")?.value || "Long",
 
-    setup:
+    if(!symbol){
+
+      toast(
+        "Please enter symbol"
+      );
+
       document
-        .getElementById("t_setup")
-        ?.value
-        .trim() ||
-      "Unspecified",
+        .getElementById(
+          "t_symbol"
+        )
+        ?.focus();
 
-    timeframe:
-      document
-        .getElementById("t_tf")
-        ?.value
-        .trim() || "",
+      return;
 
-    entry:
-      +(
-        document
-          .getElementById("t_entry")
-          ?.value
-      ) || 0,
-
-    exit:
-      +(
-        document
-          .getElementById("t_exit")
-          ?.value
-      ) || 0,
-
-    sl:
-      +(
-        document
-          .getElementById("t_sl")
-          ?.value
-      ) || 0,
-
-    target:
-      +(
-        document
-          .getElementById("t_target")
-          ?.value
-      ) || 0,
-
-    qty:
-      +(
-        document
-          .getElementById("t_qty")
-          ?.value
-      ) || 0,
-
-    pnl:
-      +(
-        document
-          .getElementById("t_pnl")
-          ?.value
-      ) || 0,
-
-    r:
-      +(
-        document
-          .getElementById("t_r")
-          ?.value
-      ) || 0,
-
-    rule:
-      document
-        .getElementById("t_rule")
-        ?.value === "true",
-
-    emotion:
-      document
-        .getElementById("t_emotion")
-        ?.value
-        .trim() || "",
-
-    mistake:
-      document
-        .getElementById("t_mistake")
-        ?.value
-        .trim() || "",
-
-    entryReason:
-      document
-        .getElementById("t_entryReason")
-        ?.value
-        .trim() || "",
-
-    exitReason:
-      document
-        .getElementById("t_exitReason")
-        ?.value
-        .trim() || "",
-
-    notes:
-      document
-        .getElementById("t_notes")
-        ?.value
-        .trim() || "",
-
-    screenshots,
-
-    created:
-      old?.created || Date.now()
-
-  };
+    }
 
 
-  const risk=
-    Math.abs(t.entry-t.sl)*t.qty;
+    const t={
 
-  t.risk=risk;
-
-  t.riskPct=0;
-
-  t.rr=
-    Math.abs(t.entry-t.sl)
-      ?
-      Math.abs(t.target-t.entry) /
-      Math.abs(t.entry-t.sl)
-      :
-      0;
+      id:
+        id ||
+        uid(),
 
 
-  if(old){
+      date:
+        value("t_date") ||
+        new Date()
+          .toISOString()
+          .slice(0,10),
 
-    Object.assign(old,t);
 
-  }else{
+      symbol,
 
-    db.trades.unshift(t);
+
+      direction:
+        value("t_direction") ||
+        "Long",
+
+
+      setup:
+        value("t_setup")
+          .trim() ||
+        "Unspecified",
+
+
+      timeframe:
+        value("t_tf")
+          .trim(),
+
+
+      entry:
+        +value("t_entry") ||
+        0,
+
+
+      exit:
+        +value("t_exit") ||
+        0,
+
+
+      sl:
+        +value("t_sl") ||
+        0,
+
+
+      target:
+        +value("t_target") ||
+        0,
+
+
+      qty:
+        +value("t_qty") ||
+        0,
+
+
+      pnl:
+        +value("t_pnl") ||
+        0,
+
+
+      r:
+        +value("t_r") ||
+        0,
+
+
+      rule:
+        value("t_rule")==="true",
+
+
+      emotion:
+        value("t_emotion")
+          .trim(),
+
+
+      mistake:
+        value("t_mistake")
+          .trim(),
+
+
+      entryReason:
+        value("t_entryReason")
+          .trim(),
+
+
+      exitReason:
+        value("t_exitReason")
+          .trim(),
+
+
+      notes:
+        value("t_notes")
+          .trim(),
+
+
+      screenshots,
+
+
+      created:
+        old?.created ||
+        Date.now()
+
+    };
+
+
+    const riskUnit=
+      Math.abs(
+        t.entry-t.sl
+      );
+
+
+    const rewardUnit=
+      Math.abs(
+        t.target-t.entry
+      );
+
+
+    t.risk=
+      riskUnit*t.qty;
+
+
+    t.riskPct=0;
+
+
+    t.rr=
+      riskUnit
+        ?
+        rewardUnit/riskUnit
+        :
+        0;
+
+
+    if(old){
+
+      Object.assign(
+        old,
+        t
+      );
+
+    }else{
+
+      db.trades.unshift(t);
+
+    }
+
+
+    saveDB();
+
+
+    /*
+      IMPORTANT:
+      Close only AFTER successful
+      localStorage save.
+    */
+
+    closeModal();
+
+
+    toast(
+      old
+        ?
+        "Trade updated"
+        :
+        "Trade added"
+    );
+
+
+    /*
+      Refresh trade list.
+    */
+
+    try{
+
+      renderTrades();
+
+    }catch(error){
+
+      console.warn(
+        "TradeVault: trade list refresh failed",
+        error
+      );
+
+    }
+
+
+  }catch(error){
+
+    console.error(
+      "TradeVault: submitTrade failed",
+      error
+    );
+
+
+    toast(
+      "Could not save trade. Please try again."
+    );
+
+
+  }finally{
+
+    if(form){
+
+      form.dataset.saving="";
+
+    }
+
+
+    if(saveButton){
+
+      saveButton.disabled=false;
+
+      saveButton.textContent=
+        originalText;
+
+    }
 
   }
-
-
-  saveDB();
-
-  closeModal();
-
-  toast(
-    old
-      ? "Trade updated"
-      : "Trade added"
-  );
 
 }
 
@@ -936,6 +1092,84 @@ export function renderTrades(){
 
         </div>
       `;
+
+}
+
+
+/* =========================
+   TRADE FORM SUBMIT DELEGATION
+========================= */
+
+if(!window.__tradeFormSubmitBound){
+
+  window.__tradeFormSubmitBound=true;
+
+
+  document.addEventListener(
+    "submit",
+    async e=>{
+
+      const form=
+        e.target.closest(
+          'form[data-trade-form]'
+        );
+
+
+      if(!form)return;
+
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
+
+      const id=
+        form.dataset.tradeId ||
+        "";
+
+
+      await submitTrade(
+        e,
+        id
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================
+   MODAL CLOSE DELEGATION
+========================= */
+
+if(!window.__modalCloseDelegationBound){
+
+  window.__modalCloseDelegationBound=true;
+
+
+  document.addEventListener(
+    "click",
+    e=>{
+
+      const closeBtn=
+        e.target.closest(
+          '[data-close-modal]'
+        );
+
+
+      if(!closeBtn)return;
+
+
+      e.preventDefault();
+
+      e.stopPropagation();
+
+
+      closeModal();
+
+    }
+  );
 
 }
 
