@@ -1,45 +1,250 @@
-import {db,saveDB,tradeStats} from "./storage.js";
-import {initSelects,chartSVG,toast,tradeCard,openModal,closeModal} from "./ui.js";
-import {openTrade,renderTrades} from "./trades.js";
-import {initRisk,riskToTrade} from "./risk.js";
-import {renderCalendar} from "./calendar.js";
-import {renderAnalytics} from "./analytics.js";
-import {renderPlaybook} from "./playbook.js";
-import {renderBacktests} from "./backtesting.js";
-import {renderReviews} from "./reviews.js";
-import {renderSettings,saveSettings} from "./settings.js";
+/* ============================================================
+   app.js — Main app: navigation, rendering, filters, import/export
+   ============================================================ */
 
-const meta={
- home:["Dashboard","Your trading process at a glance."],trades:["Trades","Record, review and manage every trade."],risk:["Risk Calculator","Size every trade before you enter."],
- calendar:["Calendar","See your trading activity day by day."],analytics:["Analytics","See what your data is actually saying."],playbook:["Playbook","Your personal setup library."],
- backtesting:["Backtesting","Test ideas separately from live trading."],reviews:["Reviews","Daily, weekly and monthly process reviews."],settings:["Settings","Backup, permissions and device preferences."]
-};
-export function go(page){document.querySelectorAll(".page").forEach(x=>x.classList.toggle("active",x.id==="page-"+page));document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===page));pageTitle.textContent=meta[page][0];pageSub.textContent=meta[page][1];window.scrollTo({top:0,behavior:"smooth"});renderAll()}
-function buildBottom(){const items=[["home","⌂","Home"],["trades","↗","Trades"],["risk","⌁","Risk"],["calendar","▦","Calendar"],["analytics","◔","Stats"],["more","⋯","More"]];bottomNav.innerHTML=items.map(x=>x[0]==="more"?`<button data-more="1"><i>${x[1]}</i>${x[2]}</button>`:`<button data-page="${x[0]}"><i>${x[1]}</i>${x[2]}</button>`).join("");bottomNav.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.page));bottomNav.querySelector("[data-more]")?.addEventListener("click",openMoreMenu)}
-document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
-buildBottom();initSelects();initRisk();
+/* ---------- Navigation ---------- */
+function go(page) {
+  ['dashboard', 'trades', 'analytics', 'settings'].forEach(p => {
+    const sec = $('page-' + p);
+    if (sec) sec.classList.toggle('hidden', p !== page);
+  });
 
-document.getElementById("filterDir")?.addEventListener("change",renderTrades);
-document.getElementById("filterResult")?.addEventListener("change",renderTrades);
-document.getElementById("anPeriod")?.addEventListener("change",renderAnalytics);
+  document.querySelectorAll('.nav-item').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === page);
+  });
 
-export function openMoreMenu(){
-  openModal(`<div class="modal-head"><h2>More</h2><button class="x" onclick="closeModal()">×</button></div>
-    <div class="stack-actions" style="display:grid;gap:10px">
-      <button class="btn" onclick="go('playbook');closeModal()">▤ Playbook</button>
-      <button class="btn" onclick="go('backtesting');closeModal()">◉ Backtesting</button>
-      <button class="btn" onclick="go('reviews');closeModal()">✓ Reviews</button>
-      <button class="btn" onclick="go('settings');closeModal()">⚙ Settings</button>
-    </div>`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'trades') renderTrades();
+  if (page === 'analytics') renderAnalytics();
 }
 
-window.openTradeWithRisk=(x)=>{go("trades");setTimeout(()=>{openTrade();setTimeout(()=>{t_entry.value=x.e;t_sl.value=x.sl;t_target.value=x.t;t_qty.value=x.qty;t_direction.value=x.dir;document.querySelector('[data-select="t_direction"] .app-select-trigger').textContent=x.dir},0)},0)}
+/* ---------- Table Renderer ---------- */
+function renderTable(list, compact) {
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Date</th><th>Symbol</th><th>Side</th>
+      <th>Entry</th><th>Exit</th><th>Qty</th>
+      <th>P&L</th>${compact ? '' : '<th></th>'}
+    </tr></thead>
+    <tbody>
+      ${list.map(t => {
+        const p = calcPnl(t);
+        return `<tr>
+          <td>${t.date || '—'}</td>
+          <td><strong>${escapeHtml(t.symbol)}</strong></td>
+          <td><span class="pill ${t.side === 'BUY' ? 'pill-buy' : 'pill-sell'}">${t.side}</span></td>
+          <td>${t.entry}</td>
+          <td>${t.exit}</td>
+          <td>${t.qty}</td>
+          <td class="${p > 0 ? 'pos' : p < 0 ? 'neg' : ''}"><strong>${fmtMoney(p)}</strong></td>
+          ${compact ? '' : `<td style="text-align:right;">
+            <button class="btn" style="padding:5px 10px;font-size:12px;" onclick="editTrade('${t.id}')">Edit</button>
+            <button class="btn btn-danger" style="padding:5px 10px;font-size:12px;" onclick="deleteTrade('${t.id}')">Del</button>
+          </td>`}
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
 
-function renderHome(){const s=tradeStats();sPnl.textContent=(s.pnl>=0?"+":"-")+"₹"+new Intl.NumberFormat("en-IN",{maximumFractionDigits:2}).format(Math.abs(s.pnl));sPnl.className=s.pnl>=0?"green":"red";sR.textContent=(s.sum>=0?"+":"")+s.sum.toFixed(2)+"R";sR.className=s.sum>=0?"green":"red";sWin.textContent=s.wr.toFixed(1)+"%";sTrades.textContent=s.a.length;pf.textContent=s.pf===0?"—":s.pf==="∞"?"∞":s.pf.toFixed(2);exp.textContent=s.a.length?(s.exp>=0?"+":"")+s.exp.toFixed(2)+"R":"—";dd.textContent=s.dd.toFixed(2)+"R";best.textContent=s.a.length?(s.best>=0?"+":"")+s.best.toFixed(2)+"R":"—";avgw.textContent=s.wins.length?"+"+s.avgw.toFixed(2)+"R":"—";avgl.textContent=s.loss.length?s.avgl.toFixed(2)+"R":"—";let eq=0,vals=[];s.a.slice().reverse().forEach(t=>{eq+=+t.r||0;vals.push(eq)});equityChart.innerHTML=chartSVG(vals);equityRange.textContent=s.a.length?`${s.a.length} trades`:"No trades";recent.innerHTML=s.a.length?`<div class="trade-list">${s.a.slice(0,5).map(tradeCard).join("")}</div>`:"<div class=\"empty\"><div><b>Your journal is empty</b><span>Start with one completed trade.</span></div></div>";let streak=0;for(const t of s.a){if(t.r>0)streak++;else break}streakBox.innerHTML=`<div><b>${streak} winning trade${streak===1?"":"s"} in current streak</b><span>Based on your latest recorded trades.</span></div>`}
+/* ---------- Dashboard ---------- */
+function renderDashboard() {
+  const list = trades;
+  const total = list.length;
+  const pnl = list.reduce((s, t) => s + calcPnl(t), 0);
+  const wins = list.filter(t => calcPnl(t) > 0).length;
+  const losses = list.filter(t => calcPnl(t) < 0).length;
+  const winRate = total ? (wins / total) * 100 : 0;
 
-export function renderAll(){initSelects();renderHome();renderTrades();renderAnalytics();renderPlaybook();renderBacktests();renderReviews();renderSettings();if(document.getElementById("page-calendar").classList.contains("active"))renderCalendar()}
-window.addEventListener("tv:data",renderAll);
-renderAll();
-document.getElementById("page-calendar").addEventListener("click",()=>renderCalendar());
+  const avgWin = wins
+    ? list.filter(t => calcPnl(t) > 0).reduce((s, t) => s + calcPnl(t), 0) / wins
+    : 0;
+  const avgLoss = losses
+    ? Math.abs(list.filter(t => calcPnl(t) < 0).reduce((s, t) => s + calcPnl(t), 0) / losses)
+    : 0;
+  const rr = avgLoss ? (avgWin / avgLoss) : 0;
 
-window.go=go;window.riskToTrade=riskToTrade;window.renderTrades=renderTrades;window.renderAnalytics=renderAnalytics;window.openMoreMenu=openMoreMenu;
+  const pnlEl = $('dashPnl');
+  pnlEl.textContent = fmtMoney(pnl);
+  pnlEl.className = 'stat-value ' + (pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '');
+  $('dashPnlSub').textContent = total + ' trades';
+
+  $('dashWinRate').textContent = winRate.toFixed(1) + '%';
+  $('dashWinSub').textContent = wins + ' wins / ' + total + ' total';
+  $('dashTrades').textContent = total;
+  $('dashRR').textContent = rr ? rr.toFixed(2) + ' : 1' : '—';
+
+  const recent = tradesSorted().slice(0, 5);
+  const cont = $('dashRecent');
+  if (!recent.length) {
+    cont.innerHTML = '<div class="empty">Abhi koi trade nahi hai. "Add Trade" pe click karo shuru karne ke liye.</div>';
+    return;
+  }
+  cont.innerHTML = renderTable(recent, true);
+}
+
+/* ---------- Trades ---------- */
+function renderTrades() {
+  const q = ($('filterSearch').value || '').toLowerCase();
+  const side = $('filterSide').value;
+  const res = $('filterResult').value;
+
+  let list = tradesSorted();
+  if (q) list = list.filter(t => (t.symbol || '').toLowerCase().includes(q));
+  if (side) list = list.filter(t => t.side === side);
+  if (res === 'win') list = list.filter(t => calcPnl(t) > 0);
+  if (res === 'loss') list = list.filter(t => calcPnl(t) < 0);
+
+  const cont = $('tradesList');
+  if (!list.length) {
+    cont.innerHTML = '<div class="empty">Koi trade match nahi hui.</div>';
+    return;
+  }
+  cont.innerHTML = renderTable(list, false);
+}
+
+/* ---------- Analytics ---------- */
+function renderAnalytics() {
+  const list = trades;
+  const wins = list.filter(t => calcPnl(t) > 0);
+  const losses = list.filter(t => calcPnl(t) < 0);
+  const be = list.filter(t => calcPnl(t) === 0);
+  const total = list.length;
+  const winRate = total ? (wins.length / total) * 100 : 0;
+
+  $('donut').style.setProperty('--p', winRate.toFixed(1));
+  $('donutVal').textContent = winRate.toFixed(0) + '%';
+  $('legendWins').textContent = wins.length + ' Wins';
+  $('legendLosses').textContent = losses.length + ' Losses';
+  $('legendBE').textContent = be.length + ' Breakeven';
+
+  const recent = tradesSorted().slice(0, 20).reverse();
+  const chart = $('pnlChart');
+  if (!recent.length) {
+    chart.innerHTML = '<div class="empty" style="width:100%">No data yet.</div>';
+  } else {
+    const maxAbs = Math.max(...recent.map(t => Math.abs(calcPnl(t))), 1);
+    chart.innerHTML = recent.map(t => {
+      const p = calcPnl(t);
+      const h = Math.max((Math.abs(p) / maxAbs) * 100, 4);
+      const cls = p > 0 ? 'pos' : p < 0 ? 'neg' : '';
+      return `<div class="bar-wrap" title="${escapeHtml(t.symbol)} ${fmtMoney(p)}">
+        <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+          <div class="bar ${cls}" style="height:${h}%"></div>
+        </div>
+        <div class="bar-label">${escapeHtml(t.symbol.slice(0, 4))}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const pnls = list.map(calcPnl);
+  const best = pnls.length ? Math.max(...pnls) : 0;
+  const worst = pnls.length ? Math.min(...pnls) : 0;
+  const totalWin = wins.reduce((s, t) => s + calcPnl(t), 0);
+  const totalLoss = Math.abs(losses.reduce((s, t) => s + calcPnl(t), 0));
+  const avgWin = wins.length ? totalWin / wins.length : 0;
+  const avgLoss = losses.length ? totalLoss / losses.length : 0;
+  const pf = totalLoss ? (totalWin / totalLoss) : (totalWin > 0 ? Infinity : 0);
+
+  $('aBest').textContent = fmtShort(best);
+  $('aWorst').textContent = fmtShort(worst);
+  $('aAvgWin').textContent = fmtShort(avgWin);
+  $('aAvgLoss').textContent = fmtShort(avgLoss);
+  $('aTotal').textContent = total;
+  $('aPF').textContent = pf === Infinity ? '∞' : pf ? pf.toFixed(2) : '—';
+}
+
+/* ---------- Export / Import / Clear ---------- */
+function exportData() {
+  const blob = new Blob([JSON.stringify(trades, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tradevault-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Exported!');
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('Invalid format');
+      if (!confirm('Import se existing data replace ho jayega. Continue?')) return;
+
+      trades = data.map(t => ({
+        id: t.id || uid(),
+        symbol: String(t.symbol || '').toUpperCase(),
+        side: t.side === 'SELL' ? 'SELL' : 'BUY',
+        entry: Number(t.entry) || 0,
+        exit: Number(t.exit) || 0,
+        qty: Number(t.qty) || 0,
+        date: t.date || new Date().toISOString().slice(0, 10),
+        notes: t.notes || '',
+        createdAt: t.createdAt || Date.now(),
+      }));
+      saveTrades();
+      toast('Imported ' + trades.length + ' trades');
+      go('dashboard');
+    } catch (err) {
+      console.error(err);
+      toast('Invalid JSON file');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearAll() {
+  if (!confirm('Saara data permanently delete ho jayega. Sure?')) return;
+  trades = [];
+  saveTrades();
+  toast('All data cleared');
+  go('dashboard');
+}
+
+/* ---------- Init ---------- */
+function init() {
+  const savedTheme = localStorage.getItem('tradevault.theme.v1') || 'light';
+  applyTheme(savedTheme);
+
+  loadTrades();
+
+  $('themeBtn').addEventListener('click', toggleTheme);
+  $('addTradeTop').addEventListener('click', () => openTradeModal());
+  $('tradeForm').addEventListener('submit', submitTrade);
+
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => go(btn.dataset.page));
+  });
+
+  $('filterSearch').addEventListener('input', renderTrades);
+  $('filterSide').addEventListener('change', renderTrades);
+  $('filterResult').addEventListener('change', renderTrades);
+
+  $('themeSelect').addEventListener('change', (e) => applyTheme(e.target.value));
+  $('exportBtn').addEventListener('click', exportData);
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', (e) => {
+    if (e.target.files[0]) importData(e.target.files[0]);
+    e.target.value = '';
+  });
+  $('clearBtn').addEventListener('click', clearAll);
+
+  $('tradeModal').addEventListener('click', (e) => {
+    if (e.target.id === 'tradeModal') closeTradeModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeTradeModal();
+  });
+
+  go('dashboard');
+}
+
+document.addEventListener('DOMContentLoaded', init);
